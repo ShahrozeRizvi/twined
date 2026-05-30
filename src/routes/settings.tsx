@@ -23,6 +23,25 @@ function SettingsPage() {
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
   const [confirmingLeave, setConfirmingLeave] = useState(0);
+  const [uploading, setUploading] = useState(false);
+
+  const uploadPhoto = async (file: File) => {
+    if (!user) return;
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${user.id}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("profile-photos")
+        .upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("profile-photos").getPublicUrl(path);
+      await supabase.from("profiles").update({ photo_url: pub.publicUrl }).eq("id", user.id);
+      await refetch();
+    } finally {
+      setUploading(false);
+    }
+  };
 
   useEffect(() => {
     if (profile) {
