@@ -81,32 +81,8 @@ function MomentsPage() {
     };
   }, [profile?.space_id]);
 
-  // realtime pings — show banner when partner sends one
-  useEffect(() => {
-    if (!profile?.space_id || !partner) return;
-    const ch = supabase
-      .channel(`pings:${profile.space_id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "thinking_pings",
-          filter: `space_id=eq.${profile.space_id}`,
-        },
-        (payload) => {
-          const p = payload.new as { from_user_id: string };
-          if (p.from_user_id !== profile.id) {
-            setPingFlash(`${partner.name} is thinking of you 🤍`);
-            setTimeout(() => setPingFlash(null), 4500);
-          }
-        }
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(ch);
-    };
-  }, [profile?.space_id, profile?.id, partner]);
+  // (Partner ping notifications are handled globally by PingListener in AppShell)
+
 
   const sendPing = async () => {
     if (!profile?.space_id) return;

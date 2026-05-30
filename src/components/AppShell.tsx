@@ -3,6 +3,7 @@ import { useEffect, type ReactNode } from "react";
 import { useTwined } from "@/lib/use-twined";
 import { TimezoneHeader } from "@/components/TimezoneHeader";
 import { BottomNav } from "@/components/BottomNav";
+import { PingListener } from "@/components/PingListener";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { user, profile, partner, loading } = useTwined();
@@ -33,10 +34,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-[100dvh] flex flex-col">
+    <div className="h-[100dvh] flex flex-col">
       <TimezoneHeader me={profile} partner={partner} />
-      <main className="flex-1 overflow-y-auto">{children}</main>
+      <main className="flex-1 min-h-0 overflow-y-auto">{children}</main>
       <BottomNav />
+      <PingListener me={profile} partner={partner} />
     </div>
   );
 }
+

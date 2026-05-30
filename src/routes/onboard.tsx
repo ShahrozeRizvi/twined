@@ -6,6 +6,7 @@ import { useTwined } from "@/lib/use-twined";
 import { detectTimezone, generateInviteCode } from "@/lib/twined";
 import { AvatarPicker } from "@/components/AvatarPicker";
 import { PixelAvatar, type AvatarPreset } from "@/components/PixelAvatar";
+import { TimezonePicker } from "@/components/TimezonePicker";
 import { Camera } from "lucide-react";
 
 const search = z.object({
@@ -26,7 +27,8 @@ function OnboardPage() {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [avatar, setAvatar] = useState<AvatarPreset>(1);
-  const [tz, setTz] = useState(detectTimezone());
+  const detectedTz = detectTimezone();
+  const [tz, setTz] = useState(detectedTz);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -151,12 +153,10 @@ function OnboardPage() {
       />
 
       <label className="text-xs text-muted-foreground mb-2 mt-2">Timezone</label>
-      <input
-        type="text"
-        value={tz}
-        onChange={(e) => setTz(e.target.value)}
-        className="bg-card border border-border rounded-xl px-4 py-3 text-sm text-foreground mb-6 focus:outline-none focus:border-primary"
-      />
+      <div className="mb-6">
+        <TimezonePicker value={tz} onChange={setTz} detected={detectedTz} />
+      </div>
+
 
       <label className="text-xs text-muted-foreground mb-3">Pick your pixel</label>
       <AvatarPicker value={avatar} onChange={setAvatar} />
