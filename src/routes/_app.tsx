@@ -9,7 +9,7 @@ export const Route = createFileRoute("/_app")({
 });
 
 function AppLayout() {
-  const { user, profile, loading } = useTwined();
+  const { user, profile, partner, loading } = useTwined();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -38,31 +38,11 @@ function AppLayout() {
 
   return (
     <div className="min-h-[100dvh] flex flex-col">
-      <TimezoneHeader me={profile} partner={null /* set below */} />
-      <AppBody />
-    </div>
-  );
-}
-
-function AppBody() {
-  const { profile, partner } = useTwined();
-  if (!profile) return null;
-  return (
-    <>
-      {/* re-render header with partner present */}
-      <div className="-mt-[1px]">
-        {/* header already at top from parent — we duplicate inside to get partner-aware sticky once partner loads */}
-      </div>
-      <PartnerHeader />
+      <TimezoneHeader me={profile} partner={partner} />
       <main className="flex-1 overflow-y-auto">
         <Outlet />
       </main>
       <BottomNav />
-    </>
+    </div>
   );
-}
-
-function PartnerHeader() {
-  // header already rendered above; nothing to do here. Kept for future expansion.
-  return null;
 }
