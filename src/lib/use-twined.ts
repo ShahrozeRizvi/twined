@@ -63,7 +63,7 @@ export function useTwined() {
   useEffect(() => {
     if (!user) return;
     const ch = supabase
-      .channel(`profile:${user.id}`)
+      .channel(`profile:${user.id}:${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "profiles", filter: `id=eq.${user.id}` },
@@ -94,7 +94,7 @@ export function useTwined() {
     })();
 
     const ch = supabase
-      .channel(`partner:${spaceId}`)
+      .channel(`partner:${spaceId}:${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         {
