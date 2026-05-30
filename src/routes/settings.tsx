@@ -7,7 +7,7 @@ import { PixelAvatar, type AvatarPreset } from "@/components/PixelAvatar";
 import { AppShell } from "@/components/AppShell";
 import { TimezonePicker } from "@/components/TimezonePicker";
 import { detectTimezone } from "@/lib/twined";
-import { Copy, Check, LogOut, Unlink } from "lucide-react";
+import { Copy, Check, LogOut, Unlink, Camera } from "lucide-react";
 
 export const Route = createFileRoute("/settings")({
   component: () => <AppShell><SettingsPage /></AppShell>,
@@ -23,6 +23,25 @@ function SettingsPage() {
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
   const [confirmingLeave, setConfirmingLeave] = useState(0);
+  const [uploading, setUploading] = useState(false);
+
+  const uploadPhoto = async (file: File) => {
+    if (!user) return;
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${user.id}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("profile-photos")
+        .upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("profile-photos").getPublicUrl(path);
+      await supabase.from("profiles").update({ photo_url: pub.publicUrl }).eq("id", user.id);
+      await refetch();
+    } finally {
+      setUploading(false);
+    }
+  };
 
   useEffect(() => {
     if (profile) {
@@ -94,6 +113,28 @@ function SettingsPage() {
             <div className="text-sm font-medium">{profile.name || "Unnamed"}</div>
             <div className="text-xs text-muted-foreground">{user?.email}</div>
           </div>
+        </div>
+
+        <div className="flex flex-col items-center my-2">
+          <label className="relative cursor-pointer">
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => e.target.files?.[0] && uploadPhoto(e.target.files[0])}
+            />
+            <div className="w-24 h-24 rounded-full overflow-hidden bg-card border border-border flex items-center justify-center">
+              {profile.photo_url ? (
+                <img src={profile.photo_url} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <Camera size={26} className="text-muted-foreground" />
+              )}
+            </div>
+            {uploading && (
+              <div className="absolute inset-0 rounded-full bg-background/70 flex items-center justify-center text-xs">…</div>
+            )}
+          </label>
+          <span className="text-xs text-muted-foreground mt-2">Tap to change photo</span>
         </div>
 
         <label className="text-xs text-muted-foreground">Name</label>
