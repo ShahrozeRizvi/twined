@@ -40,7 +40,7 @@ function TodayPage() {
   useEffect(() => {
     if (!profile?.space_id || !myDate) return;
     let cancelled = false;
-    const dates = [myDate, partnerDate].filter(Boolean);
+    const dates = [myDate, partnerDate].filter(Boolean) as string[];
     (async () => {
       const { data } = await supabase
         .from("tasks")
