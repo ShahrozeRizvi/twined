@@ -4,10 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTwined } from "@/lib/use-twined";
 import { AvatarPicker } from "@/components/AvatarPicker";
 import { PixelAvatar, type AvatarPreset } from "@/components/PixelAvatar";
+import { AppShell } from "@/components/AppShell";
 import { Copy, Check, LogOut, Unlink } from "lucide-react";
 
-export const Route = createFileRoute("/_app/settings")({
-  component: SettingsPage,
+export const Route = createFileRoute("/settings")({
+  component: () => <AppShell><SettingsPage /></AppShell>,
 });
 
 function SettingsPage() {

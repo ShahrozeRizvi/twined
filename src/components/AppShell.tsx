@@ -1,14 +1,10 @@
-import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { useEffect, type ReactNode } from "react";
 import { useTwined } from "@/lib/use-twined";
 import { TimezoneHeader } from "@/components/TimezoneHeader";
 import { BottomNav } from "@/components/BottomNav";
 
-export const Route = createFileRoute("/_app")({
-  component: AppLayout,
-});
-
-function AppLayout() {
+export function AppShell({ children }: { children: ReactNode }) {
   const { user, profile, partner, loading } = useTwined();
   const navigate = useNavigate();
 
@@ -39,9 +35,7 @@ function AppLayout() {
   return (
     <div className="min-h-[100dvh] flex flex-col">
       <TimezoneHeader me={profile} partner={partner} />
-      <main className="flex-1 overflow-y-auto">
-        <Outlet />
-      </main>
+      <main className="flex-1 overflow-y-auto">{children}</main>
       <BottomNav />
     </div>
   );
