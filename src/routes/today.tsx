@@ -103,23 +103,123 @@ function TodayPage() {
     : [];
 
   return (
-    <div className="grid grid-cols-2 gap-2 p-3 min-h-full">
-      <TaskColumn
-        title={profile.name || "You"}
-        accent="mine"
-        person={profile}
-        tasks={myTasks}
-        canEdit
-        loaded={loaded}
-      />
-      <TaskColumn
-        title={partner?.name || "Them"}
-        accent="partner"
-        person={partner}
-        tasks={partnerTasks}
-        canEdit={false}
-        loaded={loaded}
-      />
+    <div className="flex flex-col min-h-full">
+      <div className="px-4 pt-3 pb-1 flex justify-end">
+        <button
+          onClick={() => setShowYesterday(true)}
+          className="text-xs text-muted-foreground hover:text-foreground transition"
+        >
+          ← Yesterday
+        </button>
+      </div>
+      <div className="grid grid-cols-2 gap-2 p-3 pt-1 flex-1">
+        <TaskColumn
+          title={profile.name || "You"}
+          accent="mine"
+          person={profile}
+          tasks={myTasks}
+          canEdit
+          loaded={loaded}
+        />
+        <TaskColumn
+          title={partner?.name || "Them"}
+          accent="partner"
+          person={partner}
+          tasks={partnerTasks}
+          canEdit={false}
+          loaded={loaded}
+        />
+      </div>
+      {showYesterday && (
+        <YesterdaySheet
+          spaceId={profile.space_id!}
+          me={profile}
+          partner={partner}
+          onClose={() => setShowYesterday(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+function YesterdaySheet({
+  spaceId,
+  me,
+  partner,
+  onClose,
+}: {
+  spaceId: string;
+  me: Profile;
+  partner: Profile | null;
+  onClose: () => void;
+}) {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loaded, setLoaded] = useState(false);
+
+  const yesterday = (tz: string) => {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() - 1);
+    return localDateString(tz, d);
+  };
+  const myYday = yesterday(me.timezone);
+  const partnerYday = partner ? yesterday(partner.timezone) : null;
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const dates = [myYday, partnerYday].filter(Boolean) as string[];
+      const { data } = await supabase
+        .from("tasks")
+        .select("*")
+        .eq("space_id", spaceId)
+        .in("task_date", dates)
+        .order("position", { ascending: true });
+      if (!cancelled) {
+        setTasks((data as Task[]) || []);
+        setLoaded(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [spaceId, myYday, partnerYday]);
+
+  const myTasks = tasks.filter((t) => t.user_id === me.id && t.task_date === myYday);
+  const partnerTasks = partner
+    ? tasks.filter((t) => t.user_id === partner.id && t.task_date === partnerYday)
+    : [];
+
+  return (
+    <div className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm flex items-end sm:items-center justify-center">
+      <div
+        className="w-full max-w-md bg-background border-t sm:border border-border rounded-t-3xl sm:rounded-3xl flex flex-col max-h-[85vh]"
+        style={{ paddingBottom: "max(env(safe-area-inset-bottom), 16px)" }}
+      >
+        <div className="flex items-center justify-between px-4 pt-4 pb-2">
+          <h2 className="font-serif text-lg">Yesterday</h2>
+          <button onClick={onClose} className="text-muted-foreground text-sm" aria-label="Close">
+            ✕
+          </button>
+        </div>
+        <div className="grid grid-cols-2 gap-2 p-3 overflow-y-auto">
+          <TaskColumn
+            title={me.name || "You"}
+            accent="mine"
+            person={me}
+            tasks={myTasks}
+            canEdit={false}
+            loaded={loaded}
+          />
+          <TaskColumn
+            title={partner?.name || "Them"}
+            accent="partner"
+            person={partner}
+            tasks={partnerTasks}
+            canEdit={false}
+            loaded={loaded}
+          />
+        </div>
+      </div>
     </div>
   );
 }
