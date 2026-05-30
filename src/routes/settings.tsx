@@ -115,6 +115,28 @@ function SettingsPage() {
           </div>
         </div>
 
+        <div className="flex flex-col items-center my-2">
+          <label className="relative cursor-pointer">
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => e.target.files?.[0] && uploadPhoto(e.target.files[0])}
+            />
+            <div className="w-24 h-24 rounded-full overflow-hidden bg-card border border-border flex items-center justify-center">
+              {profile.photo_url ? (
+                <img src={profile.photo_url} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <Camera size={26} className="text-muted-foreground" />
+              )}
+            </div>
+            {uploading && (
+              <div className="absolute inset-0 rounded-full bg-background/70 flex items-center justify-center text-xs">…</div>
+            )}
+          </label>
+          <span className="text-xs text-muted-foreground mt-2">Tap to change photo</span>
+        </div>
+
         <label className="text-xs text-muted-foreground">Name</label>
         <input
           value={name}
