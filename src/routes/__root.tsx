@@ -81,9 +81,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "A quiet, always-on shared life OS for two long-distance partners. Today, Moments, Map — twined.",
       },
-      { property: "og:title", content: "Twined" },
-      { property: "og:description", content: "Your days, twined." },
+      { property: "og:title", content: "Twined — Your days, twined." },
+      { property: "og:description", content: "Twined is a shared life OS for two long-distance partners, offering an intimate window into each other's day." },
       { property: "og:type", content: "website" },
+      { name: "twitter:title", content: "Twined — Your days, twined." },
+      { name: "description", content: "Twined is a shared life OS for two long-distance partners, offering an intimate window into each other's day." },
+      { name: "twitter:description", content: "Twined is a shared life OS for two long-distance partners, offering an intimate window into each other's day." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d8d0b7f1-1a26-424d-8682-b3e60b9c8ff0/id-preview-2e045a1b--a5353003-10f6-489c-a4cd-860fc1c10e0a.lovable.app-1780168259457.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d8d0b7f1-1a26-424d-8682-b3e60b9c8ff0/id-preview-2e045a1b--a5353003-10f6-489c-a4cd-860fc1c10e0a.lovable.app-1780168259457.png" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
