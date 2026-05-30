@@ -7,7 +7,7 @@ import { PixelAvatar, type AvatarPreset } from "@/components/PixelAvatar";
 import { AppShell } from "@/components/AppShell";
 import { TimezonePicker } from "@/components/TimezonePicker";
 import { detectTimezone } from "@/lib/twined";
-import { Copy, Check, LogOut, Unlink } from "lucide-react";
+import { Copy, Check, LogOut, Unlink, Camera } from "lucide-react";
 
 export const Route = createFileRoute("/settings")({
   component: () => <AppShell><SettingsPage /></AppShell>,
