@@ -26,6 +26,7 @@ function TodayPage() {
   const { profile, partner } = useTwined();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [showYesterday, setShowYesterday] = useState(false);
 
   const myDate = useMemo(
     () => (profile ? localDateString(profile.timezone) : null),
