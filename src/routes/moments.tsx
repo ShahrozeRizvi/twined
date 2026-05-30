@@ -24,8 +24,42 @@ interface Moment {
 function MomentsPage() {
   const { profile, partner } = useTwined();
   const [moments, setMoments] = useState<Moment[]>([]);
+  const [yesterdayMoments, setYesterdayMoments] = useState<Moment[] | null>(null);
+  const [loadingYesterday, setLoadingYesterday] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
   const [pingFlash, setPingFlash] = useState<string | null>(null);
+
+  const loadYesterday = async () => {
+    if (!profile?.space_id) return;
+    if (yesterdayMoments !== null) {
+      setYesterdayMoments(null);
+      return;
+    }
+    setLoadingYesterday(true);
+    try {
+      const d = new Date();
+      d.setUTCDate(d.getUTCDate() - 1);
+      const ydayStr = localDateString(profile.timezone, d);
+      // Build start/end at midnight in user's local tz
+      const startLocal = new Date(`${ydayStr}T00:00:00`);
+      const tzOffsetMin = startLocal.getTimezoneOffset();
+      // Approximate: compute local-midnight UTC bounds by comparing tz offsets
+      const startUtc = new Date(
+        new Date(`${ydayStr}T00:00:00Z`).getTime() + tzOffsetMin * 60_000
+      );
+      const endUtc = new Date(startUtc.getTime() + 24 * 60 * 60 * 1000);
+      const { data } = await supabase
+        .from("moments")
+        .select("*")
+        .eq("space_id", profile.space_id!)
+        .gte("created_at", startUtc.toISOString())
+        .lt("created_at", endUtc.toISOString())
+        .order("created_at", { ascending: false });
+      setYesterdayMoments((data as Moment[]) || []);
+    } finally {
+      setLoadingYesterday(false);
+    }
+  };
 
   useEffect(() => {
     if (!profile?.space_id) return;
