@@ -390,7 +390,7 @@ function makeAvatarEl(p: Profile, kind: "mine" | "partner"): HTMLElement {
     for (let x = 0; x < row.length; x++) {
       const ch = row[x];
       if (ch === "." || !(ch in palette)) continue;
-      const fill = (palette as Record<string, string>)[ch];
+      const fill = (palette as unknown as Record<string, string>)[ch];
       rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${fill}"/>`;
     }
   }
