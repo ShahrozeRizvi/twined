@@ -17,7 +17,7 @@ interface Palette {
   o: string; // outline
 }
 
-const PALETTES: Record<AvatarPreset, Palette> = {
+export const PALETTES: Record<AvatarPreset, Palette> = {
   // Male presets
   1: { s: "#5A3825", h: "#1C1410", c: "#3E8E89", e: "#FFFFFF", m: "#3A1F12", o: "#000000" }, // dark skin, curly hair, teal hoodie
   2: { s: "#C99479", h: "#2A1E18", c: "#F0EDE6", e: "#FFFFFF", m: "#5A2E1F", o: "#000000" }, // medium skin, short hair, white tee
@@ -29,7 +29,7 @@ const PALETTES: Record<AvatarPreset, Palette> = {
 };
 
 /** 14x14 grids. Each entry is a key in the palette or `.` for transparent. */
-const SPRITES: Record<AvatarPreset, string[]> = {
+export const SPRITES: Record<AvatarPreset, string[]> = {
   // 1 — male, curly hair, hoodie
   1: [
     "..............",
