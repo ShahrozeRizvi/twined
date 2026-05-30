@@ -50,46 +50,59 @@
 :root {
   --radius: 0.875rem;
 
-  /* Base palette */
-  --background: oklch(0.16 0.012 280);          /* #0F0F14 cool near-black */
-  --foreground: oklch(0.94 0.012 295);          /* #EEEAF4 cool off-white */
-  --card: oklch(0.21 0.014 280);                /* #1A1A24 surface */
-  --card-foreground: oklch(0.94 0.012 295);
-  --popover: oklch(0.21 0.014 280);
-  --popover-foreground: oklch(0.94 0.012 295);
-  --surface-2: oklch(0.26 0.016 280);           /* slightly elevated */
+  /* Base palette — warm cream light theme */
+  --background: oklch(0.985 0.005 80);           /* warm off-white */
+  --foreground: oklch(0.22 0.02 280);            /* deep cool ink */
+  --card: oklch(1 0 0);                          /* white surfaces */
+  --card-foreground: oklch(0.22 0.02 280);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.22 0.02 280);
+  --surface-2: oklch(0.97 0.008 80);             /* faint cream elevated */
 
-  --primary: oklch(0.71 0.13 295);              /* #9B7FE8 soft violet */
-  --primary-foreground: oklch(0.16 0.012 280);
-  --secondary: oklch(0.21 0.014 280);
-  --secondary-foreground: oklch(0.94 0.012 295);
-  --muted: oklch(0.26 0.014 280);
-  --muted-foreground: oklch(0.55 0.014 285);    /* #6B6B80 */
-  --accent: oklch(0.71 0.13 295);
-  --accent-foreground: oklch(0.16 0.012 280);
+  --primary: oklch(0.62 0.16 295);               /* deeper violet for contrast */
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.96 0.006 280);
+  --secondary-foreground: oklch(0.22 0.02 280);
+  --muted: oklch(0.94 0.008 280);
+  --muted-foreground: oklch(0.5 0.015 285);
+  --accent: oklch(0.62 0.16 295);
+  --accent-foreground: oklch(0.99 0 0);
 
   /* Identity colors */
-  --mine: oklch(0.71 0.13 295);                 /* #9B7FE8 violet */
-  --partner: oklch(0.72 0.07 195);              /* #6DB5B0 teal */
-  --cream: oklch(0.95 0.02 90);                 /* warm cream for logo */
+  --mine: oklch(0.62 0.16 295);                  /* violet */
+  --partner: oklch(0.6 0.09 195);                /* teal */
+  --cream: oklch(0.45 0.08 80);                  /* warm brown for logo on light */
 
-  --destructive: oklch(0.62 0.21 25);
-  --destructive-foreground: oklch(0.96 0.01 280);
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(0.99 0 0);
 
-  --border: oklch(0.28 0.013 280);
-  --input: oklch(0.28 0.013 280);
-  --ring: oklch(0.71 0.13 295);
+  --border: oklch(0.9 0.008 280);
+  --input: oklch(0.9 0.008 280);
+  --ring: oklch(0.62 0.16 295);
 
   --chart-1: var(--mine);
   --chart-2: var(--partner);
 }
 
-.dark { /* same — app is always dark */
+.dark {
   --background: oklch(0.16 0.012 280);
   --foreground: oklch(0.94 0.012 295);
   --card: oklch(0.21 0.014 280);
   --card-foreground: oklch(0.94 0.012 295);
+  --popover: oklch(0.21 0.014 280);
+  --popover-foreground: oklch(0.94 0.012 295);
+  --surface-2: oklch(0.26 0.016 280);
+  --primary: oklch(0.71 0.13 295);
+  --primary-foreground: oklch(0.16 0.012 280);
+  --muted: oklch(0.26 0.014 280);
+  --muted-foreground: oklch(0.6 0.014 285);
+  --border: oklch(0.28 0.013 280);
+  --input: oklch(0.28 0.013 280);
+  --mine: oklch(0.71 0.13 295);
+  --partner: oklch(0.72 0.07 195);
+  --cream: oklch(0.95 0.02 90);
 }
+
 
 @layer base {
   * { border-color: var(--color-border); }
