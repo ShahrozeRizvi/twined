@@ -285,15 +285,22 @@ function MapPage() {
   };
 
   return (
-    <div className="relative h-full min-h-[400px]">
+    <div className="relative h-full min-h-[60vh] w-full bg-card">
       <div ref={mapContainer} className="absolute inset-0" />
 
+      {!mapReady && !error && (
+        <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-xs pointer-events-none">
+          Loading map…
+        </div>
+      )}
 
       {error && (
-        <div className="absolute top-3 left-3 right-3 bg-destructive/90 text-destructive-foreground text-xs rounded-xl px-3 py-2">
+        <div className="absolute top-3 left-3 right-3 bg-destructive/90 text-destructive-foreground text-xs rounded-xl px-3 py-2 z-10">
           {error}
         </div>
       )}
+
+
 
       <div
         className="absolute left-4 right-4 bottom-4 bg-card/95 backdrop-blur border border-border rounded-2xl p-3 flex items-center gap-3"
