@@ -9,38 +9,205 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PairedRouteImport } from './routes/paired'
+import { Route as OnboardRouteImport } from './routes/onboard'
+import { Route as JoinSpaceRouteImport } from './routes/join-space'
+import { Route as CreateSpaceRouteImport } from './routes/create-space'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppTodayRouteImport } from './routes/_app.today'
+import { Route as AppSettingsRouteImport } from './routes/_app.settings'
+import { Route as AppMomentsRouteImport } from './routes/_app.moments'
+import { Route as AppMapRouteImport } from './routes/_app.map'
 
+const PairedRoute = PairedRouteImport.update({
+  id: '/paired',
+  path: '/paired',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardRoute = OnboardRouteImport.update({
+  id: '/onboard',
+  path: '/onboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JoinSpaceRoute = JoinSpaceRouteImport.update({
+  id: '/join-space',
+  path: '/join-space',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CreateSpaceRoute = CreateSpaceRouteImport.update({
+  id: '/create-space',
+  path: '/create-space',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppTodayRoute = AppTodayRouteImport.update({
+  id: '/today',
+  path: '/today',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMomentsRoute = AppMomentsRouteImport.update({
+  id: '/moments',
+  path: '/moments',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMapRoute = AppMapRouteImport.update({
+  id: '/map',
+  path: '/map',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/create-space': typeof CreateSpaceRoute
+  '/join-space': typeof JoinSpaceRoute
+  '/onboard': typeof OnboardRoute
+  '/paired': typeof PairedRoute
+  '/map': typeof AppMapRoute
+  '/moments': typeof AppMomentsRoute
+  '/settings': typeof AppSettingsRoute
+  '/today': typeof AppTodayRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/create-space': typeof CreateSpaceRoute
+  '/join-space': typeof JoinSpaceRoute
+  '/onboard': typeof OnboardRoute
+  '/paired': typeof PairedRoute
+  '/map': typeof AppMapRoute
+  '/moments': typeof AppMomentsRoute
+  '/settings': typeof AppSettingsRoute
+  '/today': typeof AppTodayRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_app': typeof AppRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/create-space': typeof CreateSpaceRoute
+  '/join-space': typeof JoinSpaceRoute
+  '/onboard': typeof OnboardRoute
+  '/paired': typeof PairedRoute
+  '/_app/map': typeof AppMapRoute
+  '/_app/moments': typeof AppMomentsRoute
+  '/_app/settings': typeof AppSettingsRoute
+  '/_app/today': typeof AppTodayRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/create-space'
+    | '/join-space'
+    | '/onboard'
+    | '/paired'
+    | '/map'
+    | '/moments'
+    | '/settings'
+    | '/today'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/create-space'
+    | '/join-space'
+    | '/onboard'
+    | '/paired'
+    | '/map'
+    | '/moments'
+    | '/settings'
+    | '/today'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/auth'
+    | '/create-space'
+    | '/join-space'
+    | '/onboard'
+    | '/paired'
+    | '/_app/map'
+    | '/_app/moments'
+    | '/_app/settings'
+    | '/_app/today'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  CreateSpaceRoute: typeof CreateSpaceRoute
+  JoinSpaceRoute: typeof JoinSpaceRoute
+  OnboardRoute: typeof OnboardRoute
+  PairedRoute: typeof PairedRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/paired': {
+      id: '/paired'
+      path: '/paired'
+      fullPath: '/paired'
+      preLoaderRoute: typeof PairedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboard': {
+      id: '/onboard'
+      path: '/onboard'
+      fullPath: '/onboard'
+      preLoaderRoute: typeof OnboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/join-space': {
+      id: '/join-space'
+      path: '/join-space'
+      fullPath: '/join-space'
+      preLoaderRoute: typeof JoinSpaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/create-space': {
+      id: '/create-space'
+      path: '/create-space'
+      fullPath: '/create-space'
+      preLoaderRoute: typeof CreateSpaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +215,62 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/today': {
+      id: '/_app/today'
+      path: '/today'
+      fullPath: '/today'
+      preLoaderRoute: typeof AppTodayRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings': {
+      id: '/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/moments': {
+      id: '/_app/moments'
+      path: '/moments'
+      fullPath: '/moments'
+      preLoaderRoute: typeof AppMomentsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/map': {
+      id: '/_app/map'
+      path: '/map'
+      fullPath: '/map'
+      preLoaderRoute: typeof AppMapRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppMapRoute: typeof AppMapRoute
+  AppMomentsRoute: typeof AppMomentsRoute
+  AppSettingsRoute: typeof AppSettingsRoute
+  AppTodayRoute: typeof AppTodayRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppMapRoute: AppMapRoute,
+  AppMomentsRoute: AppMomentsRoute,
+  AppSettingsRoute: AppSettingsRoute,
+  AppTodayRoute: AppTodayRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
+  AuthRoute: AuthRoute,
+  CreateSpaceRoute: CreateSpaceRoute,
+  JoinSpaceRoute: JoinSpaceRoute,
+  OnboardRoute: OnboardRoute,
+  PairedRoute: PairedRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
