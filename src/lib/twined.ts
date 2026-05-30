@@ -1,7 +1,6 @@
 /** Shared helpers for the Twined app. */
 
-export const MAPBOX_TOKEN =
-  "pk.eyJ1Ijoic2hhaHJpenZpIiwiYSI6ImNtcHNsdDZ4NjFhNm8ycXB2MGVkNHg1bmgifQ.xnaOzEGKmXpDuga3yieKBg";
+export const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN as string;
 
 const INVITE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I
 
