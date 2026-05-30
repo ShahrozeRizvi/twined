@@ -40,6 +40,7 @@ function MapPage() {
   const myMarker = useRef<mapboxgl.Marker | null>(null);
   const partnerMarker = useRef<mapboxgl.Marker | null>(null);
   const watchId = useRef<number | null>(null);
+  const intervalId = useRef<ReturnType<typeof setInterval> | null>(null);
   const activeSession = useRef<TrailSession | null>(null);
 
   const [sharing, setSharing] = useState(false);
@@ -261,14 +262,17 @@ function MapPage() {
 
     // capture one immediately
     navigator.geolocation.getCurrentPosition(onPos, onErr, { enableHighAccuracy: true });
-    watchId.current = navigator.geolocation.watchPosition(onPos, onErr, {
-      enableHighAccuracy: true,
-      maximumAge: 30_000,
-    });
+    intervalId.current = setInterval(() => {
+      navigator.geolocation.getCurrentPosition(onPos, onErr, { enableHighAccuracy: true });
+    }, 300_000);
     setSharing(true);
   };
 
   const stopSharing = async () => {
+    if (intervalId.current !== null) {
+      clearInterval(intervalId.current);
+      intervalId.current = null;
+    }
     if (watchId.current !== null) {
       navigator.geolocation.clearWatch(watchId.current);
       watchId.current = null;
