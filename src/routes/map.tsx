@@ -5,7 +5,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import { supabase } from "@/integrations/supabase/client";
 import { useTwined, type Profile } from "@/lib/use-twined";
 import { MAPBOX_TOKEN } from "@/lib/twined";
-import { PixelAvatar, type AvatarPreset } from "@/components/PixelAvatar";
+import { PixelAvatar, SPRITES, PALETTES, type AvatarPreset } from "@/components/PixelAvatar";
 import { AppShell } from "@/components/AppShell";
 import { Play, Square } from "lucide-react";
 
@@ -381,13 +381,21 @@ function makeAvatarEl(p: Profile, kind: "mine" | "partner"): HTMLElement {
     display: flex; align-items: center; justify-content: center;
     padding: 4px;
   `;
-  // crude inline pixel avatar render — use the SVG approach by reusing PixelAvatar's logic
-  // simpler: emoji-free fallback — render initials
-  const initials = (p.name || "·").slice(0, 1).toUpperCase();
-  inner.innerHTML = `<span style="font-family: 'Playfair Display', serif; font-weight: 700; font-size: 16px; color: #1A1A24;">${initials}</span>`;
-  // overlay avatar number badge
+  const preset = (p.avatar_preset as AvatarPreset) || 1;
+  const grid = SPRITES[preset];
+  const palette = PALETTES[preset];
+  let rects = "";
+  for (let y = 0; y < grid.length; y++) {
+    const row = grid[y];
+    for (let x = 0; x < row.length; x++) {
+      const ch = row[x];
+      if (ch === "." || !(ch in palette)) continue;
+      const fill = (palette as unknown as Record<string, string>)[ch];
+      rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${fill}"/>`;
+    }
+  }
+  inner.innerHTML = `<svg width="36" height="36" viewBox="0 0 14 14" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">${rects}</svg>`;
   inner.title = `${p.name} · avatar ${p.avatar_preset}`;
-  void (p.avatar_preset as AvatarPreset);
   wrapper.appendChild(inner);
   return wrapper;
 }
