@@ -6,10 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTwined, type Profile } from "@/lib/use-twined";
 import { MAPBOX_TOKEN } from "@/lib/twined";
 import { PixelAvatar, type AvatarPreset } from "@/components/PixelAvatar";
+import { AppShell } from "@/components/AppShell";
 import { Play, Square } from "lucide-react";
 
 export const Route = createFileRoute("/map")({
-  component: MapPage,
+  component: () => <AppShell><MapPage /></AppShell>,
 });
 
 interface TrailPoint {
