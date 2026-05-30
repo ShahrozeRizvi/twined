@@ -38,13 +38,15 @@ function TodayPage() {
 
   // initial load: today's tasks for both
   useEffect(() => {
-    if (!profile?.space_id) return;
+    if (!profile?.space_id || !myDate) return;
     let cancelled = false;
+    const dates = [myDate, partnerDate].filter(Boolean);
     (async () => {
       const { data } = await supabase
         .from("tasks")
         .select("*")
         .eq("space_id", profile.space_id!)
+        .in("task_date", dates)
         .order("position", { ascending: true });
       if (!cancelled) {
         setTasks((data as Task[]) || []);
@@ -54,7 +56,7 @@ function TodayPage() {
     return () => {
       cancelled = true;
     };
-  }, [profile?.space_id]);
+  }, [profile?.space_id, myDate, partnerDate]);
 
   // realtime
   useEffect(() => {
