@@ -45,18 +45,38 @@ function MapPage() {
   const [sharing, setSharing] = useState(false);
   const [points, setPoints] = useState<TrailPoint[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [mapReady, setMapReady] = useState(false);
 
   // init map
   useEffect(() => {
     if (!mapContainer.current || mapRef.current) return;
     const container = mapContainer.current;
-    const map = new mapboxgl.Map({
-      container,
-      style: "mapbox://styles/mapbox/dark-v11",
-      center: [0, 20],
-      zoom: 1.4,
-      attributionControl: false,
+
+    let map: mapboxgl.Map;
+    try {
+      map = new mapboxgl.Map({
+        container,
+        style: "mapbox://styles/mapbox/dark-v11",
+        center: [0, 20],
+        zoom: 1.4,
+        attributionControl: false,
+      });
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? `Map failed to initialize: ${e.message}`
+          : "Map failed to initialize"
+      );
+      return;
+    }
+
+    map.on("error", (e) => {
+      const msg = e?.error?.message;
+      if (msg) setError(msg);
+      // eslint-disable-next-line no-console
+      console.error("[mapbox]", e);
     });
+
     map.on("load", () => {
       map.addSource("trail-mine", { type: "geojson", data: emptyLine() });
       map.addSource("trail-partner", { type: "geojson", data: emptyLine() });
@@ -75,23 +95,29 @@ function MapPage() {
         paint: { "line-color": "#6DB5B0", "line-width": 4, "line-opacity": 0.85 },
       });
       map.resize();
+      setMapReady(true);
     });
     mapRef.current = map;
 
-    // Keep canvas synced to container size (fixes blank/black map after layout shifts)
+    // Keep canvas synced to container size
     const ro = new ResizeObserver(() => map.resize());
     ro.observe(container);
-    // Also force a resize on next frames in case container dimensions settle late
+    const onWinResize = () => map.resize();
+    window.addEventListener("resize", onWinResize);
     requestAnimationFrame(() => map.resize());
     const t = setTimeout(() => map.resize(), 300);
+    const t2 = setTimeout(() => map.resize(), 1000);
 
     return () => {
       clearTimeout(t);
+      clearTimeout(t2);
+      window.removeEventListener("resize", onWinResize);
       ro.disconnect();
       map.remove();
       mapRef.current = null;
     };
   }, []);
+
 
   // load today's points
   useEffect(() => {
