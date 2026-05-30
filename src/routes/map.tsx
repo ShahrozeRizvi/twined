@@ -49,15 +49,15 @@ function MapPage() {
   // init map
   useEffect(() => {
     if (!mapContainer.current || mapRef.current) return;
+    const container = mapContainer.current;
     const map = new mapboxgl.Map({
-      container: mapContainer.current,
+      container,
       style: "mapbox://styles/mapbox/dark-v11",
       center: [0, 20],
       zoom: 1.4,
       attributionControl: false,
     });
     map.on("load", () => {
-      // sources/layers for trails
       map.addSource("trail-mine", { type: "geojson", data: emptyLine() });
       map.addSource("trail-partner", { type: "geojson", data: emptyLine() });
       map.addLayer({
@@ -74,9 +74,20 @@ function MapPage() {
         layout: { "line-cap": "round", "line-join": "round" },
         paint: { "line-color": "#6DB5B0", "line-width": 4, "line-opacity": 0.85 },
       });
+      map.resize();
     });
     mapRef.current = map;
+
+    // Keep canvas synced to container size (fixes blank/black map after layout shifts)
+    const ro = new ResizeObserver(() => map.resize());
+    ro.observe(container);
+    // Also force a resize on next frames in case container dimensions settle late
+    requestAnimationFrame(() => map.resize());
+    const t = setTimeout(() => map.resize(), 300);
+
     return () => {
+      clearTimeout(t);
+      ro.disconnect();
       map.remove();
       mapRef.current = null;
     };
