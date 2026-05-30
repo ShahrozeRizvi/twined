@@ -179,12 +179,17 @@ function MomentsPage() {
                 <p className="text-sm leading-relaxed whitespace-pre-wrap">{m.content}</p>
               )}
               {m.type === "photo" && m.media_url && (
-                <img
-                  src={m.media_url}
-                  alt=""
-                  className="rounded-xl w-full object-cover max-h-[420px]"
-                  loading="lazy"
-                />
+                <>
+                  <img
+                    src={m.media_url}
+                    alt=""
+                    className="rounded-xl w-full object-cover max-h-[420px]"
+                    loading="lazy"
+                  />
+                  {m.content && (
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap mt-2">{m.content}</p>
+                  )}
+                </>
               )}
               {(m.type === "voice" || m.type === "video") && (
                 <p className="text-xs text-muted-foreground italic">
