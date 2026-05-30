@@ -148,7 +148,46 @@ function MomentsPage() {
         </div>
       )}
 
+      <div className="px-4 pb-2">
+        <button
+          onClick={loadYesterday}
+          disabled={loadingYesterday}
+          className="text-xs text-muted-foreground hover:text-foreground transition disabled:opacity-50"
+        >
+          {loadingYesterday
+            ? "Loading…"
+            : yesterdayMoments !== null
+              ? "Hide yesterday"
+              : "← Yesterday"}
+        </button>
+      </div>
+
       <div className="flex flex-col gap-3 px-4">
+        {yesterdayMoments !== null && (
+          <>
+            <div className="flex items-center gap-2 pt-1">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                Yesterday
+              </span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+            {yesterdayMoments.length === 0 && (
+              <p className="text-xs text-muted-foreground text-center py-4">
+                Nothing from yesterday.
+              </p>
+            )}
+            {yesterdayMoments.map((m) => renderMoment(m, profile, partner))}
+            <div className="flex items-center gap-2 pt-1">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                Today
+              </span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+          </>
+        )}
+
         {moments.length === 0 && (
           <div className="flex flex-col items-center justify-center text-center py-16 gap-4">
             <PixelAvatar preset={profile.avatar_preset as AvatarPreset} size={72} />
@@ -156,54 +195,7 @@ function MomentsPage() {
           </div>
         )}
 
-        {moments.map((m) => {
-          const isMine = m.user_id === profile.id;
-          const author = isMine ? profile : partner;
-          return (
-            <article
-              key={m.id}
-              className="rounded-2xl bg-card border border-border p-3"
-              style={{ borderLeftColor: isMine ? "var(--mine)" : "var(--partner)", borderLeftWidth: 2 }}
-            >
-              <header className="flex items-center gap-2 mb-2">
-                {author && (
-                  <PixelAvatar preset={author.avatar_preset as AvatarPreset} size={22} animated={false} />
-                )}
-                <span className="text-xs font-medium">{author?.name || "—"}</span>
-                <span className="text-[11px] text-muted-foreground ml-auto tabular-nums">
-                  {formatLocalTime(profile.timezone, new Date(m.created_at))}
-                  {partner && profile.timezone !== partner.timezone && (
-                    <span className="ml-1.5 opacity-60">
-                      · {formatLocalTime(partner.timezone, new Date(m.created_at))}
-                    </span>
-                  )}
-                </span>
-              </header>
-
-              {m.type === "text" && m.content && (
-                <p className="text-sm leading-relaxed whitespace-pre-wrap">{m.content}</p>
-              )}
-              {m.type === "photo" && m.media_url && (
-                <>
-                  <img
-                    src={m.media_url}
-                    alt=""
-                    className="rounded-xl w-full object-cover max-h-[420px]"
-                    loading="lazy"
-                  />
-                  {m.content && (
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap mt-2">{m.content}</p>
-                  )}
-                </>
-              )}
-              {(m.type === "voice" || m.type === "video") && (
-                <p className="text-xs text-muted-foreground italic">
-                  ({m.type} — coming soon)
-                </p>
-              )}
-            </article>
-          );
-        })}
+        {moments.map((m) => renderMoment(m, profile, partner))}
       </div>
 
       <button
