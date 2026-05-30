@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTwined, type Profile } from "@/lib/use-twined";
-import { formatLocalTime } from "@/lib/twined";
+import { formatLocalTime, localDateString } from "@/lib/twined";
 import { PixelAvatar, type AvatarPreset } from "@/components/PixelAvatar";
 import { AppShell } from "@/components/AppShell";
 import { Plus, Heart, ImagePlus, Send, X } from "lucide-react";
@@ -21,11 +21,89 @@ interface Moment {
   created_at: string;
 }
 
+function renderMoment(m: Moment, profile: Profile, partner: Profile | null) {
+  const isMine = m.user_id === profile.id;
+  const author = isMine ? profile : partner;
+  return (
+    <article
+      key={m.id}
+      className="rounded-2xl bg-card border border-border p-3"
+      style={{ borderLeftColor: isMine ? "var(--mine)" : "var(--partner)", borderLeftWidth: 2 }}
+    >
+      <header className="flex items-center gap-2 mb-2">
+        {author && (
+          <PixelAvatar preset={author.avatar_preset as AvatarPreset} size={22} animated={false} />
+        )}
+        <span className="text-xs font-medium">{author?.name || "—"}</span>
+        <span className="text-[11px] text-muted-foreground ml-auto tabular-nums">
+          {formatLocalTime(profile.timezone, new Date(m.created_at))}
+          {partner && profile.timezone !== partner.timezone && (
+            <span className="ml-1.5 opacity-60">
+              · {formatLocalTime(partner.timezone, new Date(m.created_at))}
+            </span>
+          )}
+        </span>
+      </header>
+
+      {m.type === "text" && m.content && (
+        <p className="text-sm leading-relaxed whitespace-pre-wrap">{m.content}</p>
+      )}
+      {m.type === "photo" && m.media_url && (
+        <>
+          <img
+            src={m.media_url}
+            alt=""
+            className="rounded-xl w-full object-cover max-h-[420px]"
+            loading="lazy"
+          />
+          {m.content && (
+            <p className="text-sm leading-relaxed whitespace-pre-wrap mt-2">{m.content}</p>
+          )}
+        </>
+      )}
+      {(m.type === "voice" || m.type === "video") && (
+        <p className="text-xs text-muted-foreground italic">
+          ({m.type} — coming soon)
+        </p>
+      )}
+    </article>
+  );
+}
+
 function MomentsPage() {
   const { profile, partner } = useTwined();
   const [moments, setMoments] = useState<Moment[]>([]);
+  const [yesterdayMoments, setYesterdayMoments] = useState<Moment[] | null>(null);
+  const [loadingYesterday, setLoadingYesterday] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
   const [pingFlash, setPingFlash] = useState<string | null>(null);
+
+  const loadYesterday = async () => {
+    if (!profile?.space_id) return;
+    if (yesterdayMoments !== null) {
+      setYesterdayMoments(null);
+      return;
+    }
+    setLoadingYesterday(true);
+    try {
+      const d = new Date();
+      d.setUTCDate(d.getUTCDate() - 1);
+      const ydayStr = localDateString(profile.timezone, d);
+      // Local-midnight bounds in the browser's timezone
+      const startUtc = new Date(`${ydayStr}T00:00:00`);
+      const endUtc = new Date(startUtc.getTime() + 24 * 60 * 60 * 1000);
+      const { data } = await supabase
+        .from("moments")
+        .select("*")
+        .eq("space_id", profile.space_id!)
+        .gte("created_at", startUtc.toISOString())
+        .lt("created_at", endUtc.toISOString())
+        .order("created_at", { ascending: false });
+      setYesterdayMoments((data as Moment[]) || []);
+    } finally {
+      setLoadingYesterday(false);
+    }
+  };
 
   useEffect(() => {
     if (!profile?.space_id) return;
@@ -119,7 +197,46 @@ function MomentsPage() {
         </div>
       )}
 
+      <div className="px-4 pb-2">
+        <button
+          onClick={loadYesterday}
+          disabled={loadingYesterday}
+          className="text-xs text-muted-foreground hover:text-foreground transition disabled:opacity-50"
+        >
+          {loadingYesterday
+            ? "Loading…"
+            : yesterdayMoments !== null
+              ? "Hide yesterday"
+              : "← Yesterday"}
+        </button>
+      </div>
+
       <div className="flex flex-col gap-3 px-4">
+        {yesterdayMoments !== null && (
+          <>
+            <div className="flex items-center gap-2 pt-1">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                Yesterday
+              </span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+            {yesterdayMoments.length === 0 && (
+              <p className="text-xs text-muted-foreground text-center py-4">
+                Nothing from yesterday.
+              </p>
+            )}
+            {yesterdayMoments.map((m) => renderMoment(m, profile, partner))}
+            <div className="flex items-center gap-2 pt-1">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                Today
+              </span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+          </>
+        )}
+
         {moments.length === 0 && (
           <div className="flex flex-col items-center justify-center text-center py-16 gap-4">
             <PixelAvatar preset={profile.avatar_preset as AvatarPreset} size={72} />
@@ -127,54 +244,7 @@ function MomentsPage() {
           </div>
         )}
 
-        {moments.map((m) => {
-          const isMine = m.user_id === profile.id;
-          const author = isMine ? profile : partner;
-          return (
-            <article
-              key={m.id}
-              className="rounded-2xl bg-card border border-border p-3"
-              style={{ borderLeftColor: isMine ? "var(--mine)" : "var(--partner)", borderLeftWidth: 2 }}
-            >
-              <header className="flex items-center gap-2 mb-2">
-                {author && (
-                  <PixelAvatar preset={author.avatar_preset as AvatarPreset} size={22} animated={false} />
-                )}
-                <span className="text-xs font-medium">{author?.name || "—"}</span>
-                <span className="text-[11px] text-muted-foreground ml-auto tabular-nums">
-                  {formatLocalTime(profile.timezone, new Date(m.created_at))}
-                  {partner && profile.timezone !== partner.timezone && (
-                    <span className="ml-1.5 opacity-60">
-                      · {formatLocalTime(partner.timezone, new Date(m.created_at))}
-                    </span>
-                  )}
-                </span>
-              </header>
-
-              {m.type === "text" && m.content && (
-                <p className="text-sm leading-relaxed whitespace-pre-wrap">{m.content}</p>
-              )}
-              {m.type === "photo" && m.media_url && (
-                <>
-                  <img
-                    src={m.media_url}
-                    alt=""
-                    className="rounded-xl w-full object-cover max-h-[420px]"
-                    loading="lazy"
-                  />
-                  {m.content && (
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap mt-2">{m.content}</p>
-                  )}
-                </>
-              )}
-              {(m.type === "voice" || m.type === "video") && (
-                <p className="text-xs text-muted-foreground italic">
-                  ({m.type} — coming soon)
-                </p>
-              )}
-            </article>
-          );
-        })}
+        {moments.map((m) => renderMoment(m, profile, partner))}
       </div>
 
       <button
