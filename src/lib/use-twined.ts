@@ -77,7 +77,8 @@ export function useTwined() {
 
   // load and subscribe to partner profile
   useEffect(() => {
-    if (!profile?.space_id || !user) {
+    const spaceId = profile?.space_id;
+    if (!spaceId || !user) {
       setPartner(null);
       return;
     }
@@ -86,27 +87,27 @@ export function useTwined() {
       const { data } = await supabase
         .from("profiles")
         .select("*")
-        .eq("space_id", profile.space_id)
+        .eq("space_id", spaceId)
         .neq("id", user.id)
         .maybeSingle();
       if (!cancelled) setPartner(data as Profile | null);
     })();
 
     const ch = supabase
-      .channel(`partner:${profile.space_id}`)
+      .channel(`partner:${spaceId}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "profiles",
-          filter: `space_id=eq.${profile.space_id}`,
+          filter: `space_id=eq.${spaceId}`,
         },
         async () => {
           const { data } = await supabase
             .from("profiles")
             .select("*")
-            .eq("space_id", profile.space_id!)
+            .eq("space_id", spaceId)
             .neq("id", user.id)
             .maybeSingle();
           setPartner(data as Profile | null);

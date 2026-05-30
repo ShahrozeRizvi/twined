@@ -167,7 +167,7 @@ export function PixelAvatar({ preset, size = 64, className = "", animated = true
         {grid.map((row, y) =>
           row.split("").map((cell, x) => {
             if (cell === ".") return null;
-            const color = (palette as Record<string, string>)[cell];
+            const color = (palette as unknown as Record<string, string>)[cell];
             if (!color) return null;
             return (
               <rect key={`${x}-${y}`} x={x} y={y} width={1} height={1} fill={color} />
