@@ -1,10 +1,11 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { CheckSquare, Sparkles, Map } from "lucide-react";
+import { CheckSquare, Sparkles, Map, User } from "lucide-react";
 
 const TABS = [
   { to: "/today", label: "Today", icon: CheckSquare },
   { to: "/moments", label: "Moments", icon: Sparkles },
   { to: "/map", label: "Map", icon: Map },
+  { to: "/settings", label: "Me", icon: User },
 ] as const;
 
 export function BottomNav() {
@@ -15,7 +16,7 @@ export function BottomNav() {
       className="sticky bottom-0 z-30 bg-card border-t border-border"
       style={{ paddingBottom: "max(env(safe-area-inset-bottom), 8px)" }}
     >
-      <div className="grid grid-cols-3 px-2 pt-2">
+      <div className="grid grid-cols-4 px-2 pt-2">
         {TABS.map(({ to, label, icon: Icon }) => {
           const active = pathname.startsWith(to);
           return (
@@ -36,3 +37,4 @@ export function BottomNav() {
     </nav>
   );
 }
+

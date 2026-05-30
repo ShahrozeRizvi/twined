@@ -73,7 +73,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover",
       },
-      { name: "theme-color", content: "#0F0F14" },
+      { name: "theme-color", content: "#FAF8F3" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { name: "apple-mobile-web-app-title", content: "Twined" },
@@ -141,7 +141,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
-      <Toaster position="top-center" theme="dark" richColors />
+      <Toaster position="top-center" theme="light" richColors />
     </QueryClientProvider>
   );
 }

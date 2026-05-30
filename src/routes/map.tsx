@@ -56,7 +56,7 @@ function MapPage() {
     try {
       map = new mapboxgl.Map({
         container,
-        style: "mapbox://styles/mapbox/dark-v11",
+        style: "mapbox://styles/mapbox/light-v11",
         center: [0, 20],
         zoom: 1.4,
         attributionControl: false,
@@ -377,14 +377,14 @@ function makeAvatarEl(p: Profile, kind: "mine" | "partner"): HTMLElement {
   inner.style.cssText = `
     width: 100%; height: 100%;
     border-radius: 9999px;
-    background: #1A1A24;
+    background: #ffffff;
     display: flex; align-items: center; justify-content: center;
     padding: 4px;
   `;
   // crude inline pixel avatar render — use the SVG approach by reusing PixelAvatar's logic
   // simpler: emoji-free fallback — render initials
   const initials = (p.name || "·").slice(0, 1).toUpperCase();
-  inner.innerHTML = `<span style="font-family: 'Playfair Display', serif; font-weight: 700; font-size: 16px; color: #EEEAF4;">${initials}</span>`;
+  inner.innerHTML = `<span style="font-family: 'Playfair Display', serif; font-weight: 700; font-size: 16px; color: #1A1A24;">${initials}</span>`;
   // overlay avatar number badge
   inner.title = `${p.name} · avatar ${p.avatar_preset}`;
   void (p.avatar_preset as AvatarPreset);

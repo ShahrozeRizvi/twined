@@ -5,6 +5,8 @@ import { useTwined } from "@/lib/use-twined";
 import { AvatarPicker } from "@/components/AvatarPicker";
 import { PixelAvatar, type AvatarPreset } from "@/components/PixelAvatar";
 import { AppShell } from "@/components/AppShell";
+import { TimezonePicker } from "@/components/TimezonePicker";
+import { detectTimezone } from "@/lib/twined";
 import { Copy, Check, LogOut, Unlink } from "lucide-react";
 
 export const Route = createFileRoute("/settings")({
@@ -102,11 +104,7 @@ function SettingsPage() {
         />
 
         <label className="text-xs text-muted-foreground mt-1">Timezone</label>
-        <input
-          value={tz}
-          onChange={(e) => setTz(e.target.value)}
-          className="bg-card border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-primary"
-        />
+        <TimezonePicker value={tz} onChange={setTz} detected={detectTimezone()} />
 
         <label className="text-xs text-muted-foreground mt-1">Avatar</label>
         <AvatarPicker value={avatar} onChange={setAvatar} />
