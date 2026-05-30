@@ -6,7 +6,7 @@ import { formatLocalTime } from "@/lib/twined";
 import { PixelAvatar, type AvatarPreset } from "@/components/PixelAvatar";
 import { Plus, Heart, ImagePlus, Send, X } from "lucide-react";
 
-export const Route = createFileRoute("/_app/moments")({
+export const Route = createFileRoute("/moments")({
   component: MomentsPage,
 });
 

@@ -6,7 +6,7 @@ import { AvatarPicker } from "@/components/AvatarPicker";
 import { PixelAvatar, type AvatarPreset } from "@/components/PixelAvatar";
 import { Copy, Check, LogOut, Unlink } from "lucide-react";
 
-export const Route = createFileRoute("/_app/settings")({
+export const Route = createFileRoute("/settings")({
   component: SettingsPage,
 });
 

@@ -8,7 +8,7 @@ import { MAPBOX_TOKEN } from "@/lib/twined";
 import { PixelAvatar, type AvatarPreset } from "@/components/PixelAvatar";
 import { Play, Square } from "lucide-react";
 
-export const Route = createFileRoute("/_app/map")({
+export const Route = createFileRoute("/map")({
   component: MapPage,
 });
 
