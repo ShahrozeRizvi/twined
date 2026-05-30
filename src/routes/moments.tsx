@@ -40,13 +40,8 @@ function MomentsPage() {
       const d = new Date();
       d.setUTCDate(d.getUTCDate() - 1);
       const ydayStr = localDateString(profile.timezone, d);
-      // Build start/end at midnight in user's local tz
-      const startLocal = new Date(`${ydayStr}T00:00:00`);
-      const tzOffsetMin = startLocal.getTimezoneOffset();
-      // Approximate: compute local-midnight UTC bounds by comparing tz offsets
-      const startUtc = new Date(
-        new Date(`${ydayStr}T00:00:00Z`).getTime() + tzOffsetMin * 60_000
-      );
+      // Local-midnight bounds in the browser's timezone
+      const startUtc = new Date(`${ydayStr}T00:00:00`);
       const endUtc = new Date(startUtc.getTime() + 24 * 60 * 60 * 1000);
       const { data } = await supabase
         .from("moments")
