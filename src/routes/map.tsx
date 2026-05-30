@@ -259,8 +259,9 @@ function MapPage() {
   };
 
   return (
-    <div className="relative h-[calc(100dvh-180px)]">
+    <div className="relative h-full min-h-[400px]">
       <div ref={mapContainer} className="absolute inset-0" />
+
 
       {error && (
         <div className="absolute top-3 left-3 right-3 bg-destructive/90 text-destructive-foreground text-xs rounded-xl px-3 py-2">
