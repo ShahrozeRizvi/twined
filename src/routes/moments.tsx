@@ -69,6 +69,8 @@ function renderMoment(m: Moment, profile: Profile, partner: Profile | null) {
     </article>
   );
 }
+
+function MomentsPage() {
   const { profile, partner } = useTwined();
   const [moments, setMoments] = useState<Moment[]>([]);
   const [yesterdayMoments, setYesterdayMoments] = useState<Moment[] | null>(null);
