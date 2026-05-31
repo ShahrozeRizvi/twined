@@ -5,7 +5,7 @@ import { useTwined, type Profile } from "@/lib/use-twined";
 import { formatLocalTime, localDateString } from "@/lib/twined";
 import { PixelAvatar, type AvatarPreset } from "@/components/PixelAvatar";
 import { AppShell } from "@/components/AppShell";
-import { Plus, ImagePlus, Send, X } from "lucide-react";
+import { Plus, ImagePlus, Camera, Send, X } from "lucide-react";
 
 export const Route = createFileRoute("/moments")({
   component: () => <AppShell><MomentsPage /></AppShell>,
