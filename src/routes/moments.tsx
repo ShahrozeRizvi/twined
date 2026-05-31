@@ -5,7 +5,7 @@ import { useTwined, type Profile } from "@/lib/use-twined";
 import { formatLocalTime, localDateString } from "@/lib/twined";
 import { PixelAvatar, type AvatarPreset } from "@/components/PixelAvatar";
 import { AppShell } from "@/components/AppShell";
-import { Plus, ImagePlus, Send, X } from "lucide-react";
+import { Plus, ImagePlus, Camera, Send, X } from "lucide-react";
 
 export const Route = createFileRoute("/moments")({
   component: () => <AppShell><MomentsPage /></AppShell>,
@@ -243,6 +243,7 @@ function Composer({ profile, onClose }: { profile: Profile; onClose: () => void 
   const [busy, setBusy] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
 
   const previewUrl = selectedFile ? URL.createObjectURL(selectedFile) : null;
 
@@ -342,6 +343,18 @@ function Composer({ profile, onClose }: { profile: Profile; onClose: () => void 
             if (e.target.value) e.target.value = "";
           }}
         />
+        <input
+          ref={cameraRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0] || null;
+            if (file) setSelectedFile(file);
+            if (e.target.value) e.target.value = "";
+          }}
+        />
 
         <div className="flex gap-2">
           <button
@@ -350,7 +363,15 @@ function Composer({ profile, onClose }: { profile: Profile; onClose: () => void 
             className="flex-1 flex items-center justify-center gap-2 rounded-2xl border border-border py-3 text-sm disabled:opacity-50"
           >
             <ImagePlus size={16} />
-            {uploading ? "Uploading…" : "Photo"}
+            Gallery
+          </button>
+          <button
+            onClick={() => cameraRef.current?.click()}
+            disabled={uploading}
+            className="flex-1 flex items-center justify-center gap-2 rounded-2xl border border-border py-3 text-sm disabled:opacity-50"
+          >
+            <Camera size={16} />
+            Camera
           </button>
           <button
             onClick={handlePost}
