@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTwined, type Profile } from "@/lib/use-twined";
-import { formatLocalTime, localDateString } from "@/lib/twined";
+import { formatLocalTime } from "@/lib/twined";
 import { PixelAvatar, type AvatarPreset } from "@/components/PixelAvatar";
 import { AppShell } from "@/components/AppShell";
 import { Plus, ImagePlus, Camera, Send, X } from "lucide-react";
@@ -77,37 +77,8 @@ function renderMoment(m: Moment, profile: Profile, partner: Profile | null) {
 function MomentsPage() {
   const { profile, partner } = useTwined();
   const [moments, setMoments] = useState<Moment[]>([]);
-  const [yesterdayMoments, setYesterdayMoments] = useState<Moment[] | null>(null);
-  const [loadingYesterday, setLoadingYesterday] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
   
-
-  const loadYesterday = async () => {
-    if (!profile?.space_id) return;
-    if (yesterdayMoments !== null) {
-      setYesterdayMoments(null);
-      return;
-    }
-    setLoadingYesterday(true);
-    try {
-      const d = new Date();
-      d.setUTCDate(d.getUTCDate() - 1);
-      const ydayStr = localDateString(profile.timezone, d);
-      // Local-midnight bounds in the browser's timezone
-      const startUtc = new Date(`${ydayStr}T00:00:00`);
-      const endUtc = new Date(startUtc.getTime() + 24 * 60 * 60 * 1000);
-      const { data } = await supabase
-        .from("moments")
-        .select("*")
-        .eq("space_id", profile.space_id!)
-        .gte("created_at", startUtc.toISOString())
-        .lt("created_at", endUtc.toISOString())
-        .order("created_at", { ascending: false });
-      setYesterdayMoments((data as Moment[]) || []);
-    } finally {
-      setLoadingYesterday(false);
-    }
-  };
 
   useEffect(() => {
     if (!profile?.space_id) return;
@@ -173,48 +144,7 @@ function MomentsPage() {
         {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
       </p>
 
-
-
-      <div className="px-4 pb-2">
-        <button
-          onClick={loadYesterday}
-          disabled={loadingYesterday}
-          className="text-xs text-muted-foreground hover:text-foreground transition disabled:opacity-50"
-        >
-          {loadingYesterday
-            ? "Loading…"
-            : yesterdayMoments !== null
-              ? "Hide yesterday"
-              : "← Yesterday"}
-        </button>
-      </div>
-
-      <div className="flex flex-col gap-3 px-4">
-        {yesterdayMoments !== null && (
-          <>
-            <div className="flex items-center gap-2 pt-1">
-              <div className="h-px flex-1 bg-border" />
-              <span className="text-[11px] uppercase tracking-wider text-muted-foreground">
-                Yesterday
-              </span>
-              <div className="h-px flex-1 bg-border" />
-            </div>
-            {yesterdayMoments.length === 0 && (
-              <p className="text-xs text-muted-foreground text-center py-4">
-                Nothing from yesterday.
-              </p>
-            )}
-            {yesterdayMoments.map((m) => renderMoment(m, profile, partner))}
-            <div className="flex items-center gap-2 pt-1">
-              <div className="h-px flex-1 bg-border" />
-              <span className="text-[11px] uppercase tracking-wider text-muted-foreground">
-                Today
-              </span>
-              <div className="h-px flex-1 bg-border" />
-            </div>
-          </>
-        )}
-
+      <div className="flex flex-col gap-3 px-4 pt-2">
         {moments.length === 0 && (
           <div className="flex flex-col items-center justify-center text-center py-16 gap-4">
             <PixelAvatar preset={profile.avatar_preset as AvatarPreset} size={72} />
