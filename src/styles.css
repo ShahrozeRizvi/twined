@@ -157,3 +157,9 @@
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 }
+
+/* Floating hearts (thinking-of-you) */
+@keyframes float-heart {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-60vh) scale(0.5); opacity: 0; }
+}
