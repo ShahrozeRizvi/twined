@@ -223,47 +223,16 @@ function TaskColumn({
         <span className="text-xs font-medium tracking-wide truncate">{title}</span>
       </div>
 
-      <ul className="flex-1 px-2 pb-2 space-y-1 overflow-y-auto min-h-[200px]">
-        {loaded && tasks.length === 0 && (
-          <li className="flex flex-col items-center justify-center text-center py-10 px-2 gap-3">
-            {person && <PixelAvatar preset={person.avatar_preset as AvatarPreset} size={48} />}
-            <p className="text-xs text-muted-foreground">
-              {canEdit ? "What's on your plate today?" : "Nothing here yet."}
-            </p>
-          </li>
-        )}
-        {tasks.map((t) => (
-          <li key={t.id} className="group flex items-start gap-2 px-1.5 py-1.5 rounded-lg">
-            <button
-              onClick={() => toggle(t)}
-              disabled={!canEdit}
-              className="mt-0.5 w-4 h-4 rounded-md border flex items-center justify-center flex-shrink-0"
-              style={{
-                borderColor: t.completed ? accentVar : "var(--border)",
-                background: t.completed ? accentVar : "transparent",
-              }}
-            >
-              {t.completed && <Check size={11} className="text-background" strokeWidth={3} />}
-            </button>
-            <span
-              className={`text-sm leading-tight flex-1 break-words ${
-                t.completed ? "line-through opacity-40" : ""
-              }`}
-            >
-              {t.text}
-            </span>
-            {canEdit && (
-              <button
-                onClick={() => remove(t)}
-                className="text-muted-foreground opacity-0 group-hover:opacity-100 active:opacity-100 text-xs"
-                aria-label="Delete"
-              >
-                ✕
-              </button>
-            )}
-          </li>
-        ))}
-      </ul>
+      <TaskList
+        tasks={tasks}
+        canEdit={canEdit}
+        loaded={loaded}
+        accentVar={accentVar}
+        person={person}
+        onToggle={toggle}
+        onRemove={remove}
+      />
+
 
       {canEdit && (
         <form
