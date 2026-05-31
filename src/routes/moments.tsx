@@ -28,13 +28,17 @@ function renderMoment(m: Moment, profile: Profile, partner: Profile | null) {
     <article
       key={m.id}
       className="rounded-2xl bg-card border border-border p-3"
-      style={{ borderLeftColor: isMine ? "var(--mine)" : "var(--partner)", borderLeftWidth: 2 }}
+      style={{
+        borderLeftColor: isMine ? "var(--mine)" : "var(--partner)",
+        borderLeftWidth: 3,
+        background: isMine ? undefined : "color-mix(in oklab, var(--partner) 5%, var(--card))",
+      }}
     >
       <header className="flex items-center gap-2 mb-2">
         {author && (
           <PixelAvatar preset={author.avatar_preset as AvatarPreset} size={22} animated={false} />
         )}
-        <span className="text-xs font-medium">{author?.name || "—"}</span>
+        <span className="text-sm font-semibold">{author?.name || "—"}</span>
         <span className="text-[11px] text-muted-foreground ml-auto tabular-nums">
           {formatLocalTime(profile.timezone, new Date(m.created_at))}
           {partner && profile.timezone !== partner.timezone && (
@@ -165,9 +169,9 @@ function MomentsPage() {
 
   return (
     <div className="relative pb-24">
-      <div className="px-4 pt-4 pb-3 flex items-center justify-between">
-        <h1 className="font-serif text-xl">Moments</h1>
-      </div>
+      <p className="text-xs text-muted-foreground px-4 pt-4 pb-1">
+        {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+      </p>
 
 
 
