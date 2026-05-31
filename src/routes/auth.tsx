@@ -23,15 +23,18 @@ function AuthPage() {
   const [error, setError] = useState<string | null>(null);
   const [forgotMode, setForgotMode] = useState(false);
   const [resetSent, setResetSent] = useState(false);
-  const [pageMode, setPageMode] = useState<"auth" | "reset">("auth");
+  const [resetMode, setResetMode] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [resetSuccess, setResetSuccess] = useState(false);
 
   useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash.includes("type=recovery")) {
+      setResetMode(true);
+    }
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
-        setPageMode("reset");
+        setResetMode(true);
       }
     });
     return () => subscription.unsubscribe();
@@ -94,7 +97,7 @@ function AuthPage() {
     setError(null);
   };
 
-  if (pageMode === "reset") {
+  if (resetMode) {
     return (
       <div className="min-h-[100dvh] flex flex-col px-6 pt-[max(env(safe-area-inset-top),48px)] pb-8">
         <div className="flex flex-col items-center mb-10">

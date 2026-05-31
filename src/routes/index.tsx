@@ -14,6 +14,10 @@ function WelcomePage() {
 
   // auto-route signed-in users to the right place
   useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash.includes("type=recovery")) {
+      navigate({ to: "/auth", search: { mode: "create" } });
+      return;
+    }
     if (loading) return;
     if (!user) return;
     if (!profile) return;
