@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
@@ -23,6 +23,39 @@ function AuthPage() {
   const [error, setError] = useState<string | null>(null);
   const [forgotMode, setForgotMode] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  const [pageMode, setPageMode] = useState<"auth" | "reset">("auth");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [resetSuccess, setResetSuccess] = useState(false);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setPageMode("reset");
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const onResetSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      setResetSuccess(true);
+      setTimeout(() => navigate({ to: "/today" }), 1500);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,9 +64,7 @@ function AuthPage() {
 
     try {
       if (forgotMode) {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: window.location.origin + "/auth",
-        });
+        const { error } = await supabase.auth.resetPasswordForEmail(email);
         if (error) throw error;
         setResetSent(true);
       } else if (tab === "signup") {
@@ -63,6 +94,54 @@ function AuthPage() {
     setError(null);
   };
 
+  if (pageMode === "reset") {
+    return (
+      <div className="min-h-[100dvh] flex flex-col px-6 pt-[max(env(safe-area-inset-top),48px)] pb-8">
+        <div className="flex flex-col items-center mb-10">
+          <Logo size="md" />
+          <p className="text-muted-foreground text-xs mt-3 tracking-wider">Set a new password</p>
+        </div>
+        <form onSubmit={onResetSubmit} className="max-w-sm w-full mx-auto flex flex-col gap-3">
+          {resetSuccess ? (
+            <p className="text-sm text-muted-foreground">Password updated. You're now logged in.</p>
+          ) : (
+            <>
+              <input
+                type="password"
+                required
+                minLength={8}
+                autoComplete="new-password"
+                placeholder="New password (min 8 chars)"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="bg-card border border-border rounded-xl px-4 py-3.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
+              />
+              <input
+                type="password"
+                required
+                minLength={8}
+                autoComplete="new-password"
+                placeholder="Confirm new password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="bg-card border border-border rounded-xl px-4 py-3.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
+              />
+              {error && <p className="text-xs text-destructive">{error}</p>}
+              <button
+                type="submit"
+                disabled={busy}
+                className="rounded-2xl px-6 py-4 font-medium mt-2 disabled:opacity-50"
+                style={{ background: "var(--primary)", color: "var(--primary-foreground)" }}
+              >
+                {busy ? "…" : "Update password"}
+              </button>
+            </>
+          )}
+        </form>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-[100dvh] flex flex-col px-6 pt-[max(env(safe-area-inset-top),48px)] pb-8">
       <div className="flex flex-col items-center mb-10">
@@ -71,6 +150,7 @@ function AuthPage() {
           {mode === "create" ? "Create your space" : "Join your person"}
         </p>
       </div>
+
 
       <div className="flex gap-2 mb-6 p-1 rounded-2xl bg-card border border-border max-w-sm w-full mx-auto">
         {(["signup", "login"] as const).map((t) => (
