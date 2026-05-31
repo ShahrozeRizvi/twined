@@ -382,6 +382,32 @@ function SortableTaskItem({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: t.id });
 
+  const [swipeX, setSwipeX] = useState(0);
+  const [swiping, setSwiping] = useState(false);
+  const startXRef = useRef<number | null>(null);
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    startXRef.current = e.touches[0].clientX;
+    setSwiping(true);
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (startXRef.current === null) return;
+    const dx = e.touches[0].clientX - startXRef.current;
+    if (dx < 0) setSwipeX(Math.max(dx, -160));
+  };
+  const onTouchEnd = () => {
+    setSwiping(false);
+    if (swipeX < -80) {
+      setSwipeX(-400);
+      onRemove(t);
+    } else {
+      setSwipeX(0);
+    }
+    startXRef.current = null;
+  };
+
+  const revealed = swipeX < -10;
+
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -392,40 +418,60 @@ function SortableTaskItem({
     <li
       ref={setNodeRef}
       style={style}
-      className="group flex items-start gap-1 px-1.5 py-1.5 rounded-lg bg-card"
+      className="relative rounded-lg overflow-hidden"
     >
-      <button
-        {...attributes}
-        {...listeners}
-        className="mt-0.5 text-muted-foreground opacity-0 group-hover:opacity-60 active:opacity-100 cursor-grab active:cursor-grabbing touch-none flex-shrink-0"
-        aria-label="Drag to reorder"
-      >
-        <GripVertical size={14} />
-      </button>
-      <button
-        onClick={() => onToggle(t)}
-        className="mt-0.5 w-4 h-4 rounded-md border flex items-center justify-center flex-shrink-0"
+      {revealed && (
+        <div
+          className="absolute inset-y-0 right-0 flex items-center justify-end pr-4"
+          style={{ background: "#EF4444", width: Math.min(-swipeX, 160) }}
+          aria-hidden
+        >
+          <Trash2 size={18} className="text-white" />
+        </div>
+      )}
+      <div
+        className="group flex items-start gap-1 px-1.5 py-1.5 bg-card relative"
         style={{
-          borderColor: t.completed ? accentVar : "var(--border)",
-          background: t.completed ? accentVar : "transparent",
+          transform: `translateX(${swipeX}px)`,
+          transition: swiping ? "none" : "transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1)",
         }}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
       >
-        {t.completed && <Check size={11} className="text-background" strokeWidth={3} />}
-      </button>
-      <span
-        className={`text-sm leading-tight flex-1 break-words ${
-          t.completed ? "line-through opacity-40" : ""
-        }`}
-      >
-        {t.text}
-      </span>
-      <button
-        onClick={() => onRemove(t)}
-        className="text-muted-foreground opacity-0 group-hover:opacity-100 active:opacity-100 text-xs"
-        aria-label="Delete"
-      >
-        ✕
-      </button>
+        <button
+          {...attributes}
+          {...listeners}
+          className="mt-0.5 text-muted-foreground opacity-0 group-hover:opacity-60 active:opacity-100 cursor-grab active:cursor-grabbing touch-none flex-shrink-0"
+          aria-label="Drag to reorder"
+        >
+          <GripVertical size={14} />
+        </button>
+        <button
+          onClick={() => onToggle(t)}
+          className="mt-0.5 w-4 h-4 rounded-md border flex items-center justify-center flex-shrink-0"
+          style={{
+            borderColor: t.completed ? accentVar : "var(--border)",
+            background: t.completed ? accentVar : "transparent",
+          }}
+        >
+          {t.completed && <Check size={11} className="text-background" strokeWidth={3} />}
+        </button>
+        <span
+          className={`text-sm leading-tight flex-1 break-words ${
+            t.completed ? "line-through opacity-40" : ""
+          }`}
+        >
+          {t.text}
+        </span>
+        <button
+          onClick={() => onRemove(t)}
+          className="text-muted-foreground opacity-0 group-hover:opacity-100 active:opacity-100 text-xs"
+          aria-label="Delete"
+        >
+          ✕
+        </button>
+      </div>
     </li>
   );
 }
