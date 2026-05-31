@@ -1,20 +1,33 @@
 import { useEffect, useRef, useState } from "react";
 import { Heart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 
 export type HeartOrigin = "mine" | "partner";
 
 interface FloatingHeart {
   id: string;
   size: number;
-  drift: number; // horizontal drift in px
+  drift: number;
   origin: HeartOrigin;
   delay: number;
 }
 
 let _spawnHeart: ((origin: HeartOrigin) => void) | null = null;
+let _channel: RealtimeChannel | null = null;
+let _myId: string | null = null;
+
 export function spawnLocalHeart(origin: HeartOrigin = "mine") {
   _spawnHeart?.(origin);
+}
+
+export async function broadcastHeart() {
+  if (!_channel || !_myId) return;
+  await _channel.send({
+    type: "broadcast",
+    event: "heart",
+    payload: { from: _myId, x: Math.random() },
+  });
 }
 
 export function FloatingHearts({
@@ -25,14 +38,14 @@ export function FloatingHearts({
   myId: string;
 }) {
   const [hearts, setHearts] = useState<FloatingHeart[]>([]);
-  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const spawnRef = useRef<(origin: HeartOrigin) => void>(() => {});
 
-  const spawn = (origin: HeartOrigin) => {
+  spawnRef.current = (origin: HeartOrigin) => {
     const count = 1 + Math.floor(Math.random() * 2);
     const next: FloatingHeart[] = [];
     for (let i = 0; i < count; i++) {
       next.push({
-        id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        id: `${Date.now()}-${Math.random().toString(36).slice(2)}-${i}`,
         size: 20 + Math.floor(Math.random() * 17),
         drift: (Math.random() - 0.5) * 120,
         origin,
@@ -43,19 +56,19 @@ export function FloatingHearts({
     next.forEach((h) => {
       setTimeout(() => {
         setHearts((prev) => prev.filter((x) => x.id !== h.id));
-      }, 1600 + h.delay);
+      }, 1700 + h.delay);
     });
   };
 
-  // Expose for local triggering (BottomNav)
   useEffect(() => {
-    _spawnHeart = spawn;
+    const fn = (o: HeartOrigin) => spawnRef.current(o);
+    _spawnHeart = fn;
+    _myId = myId;
     return () => {
-      if (_spawnHeart === spawn) _spawnHeart = null;
+      if (_spawnHeart === fn) _spawnHeart = null;
     };
-  }, []);
+  }, [myId]);
 
-  // Subscribe to broadcast channel
   useEffect(() => {
     if (!spaceId) return;
     const ch = supabase.channel(`hearts:${spaceId}`, {
@@ -64,12 +77,12 @@ export function FloatingHearts({
     ch.on("broadcast", { event: "heart" }, (msg) => {
       const payload = msg.payload as { from?: string };
       if (!payload?.from || payload.from === myId) return;
-      spawn("partner");
+      spawnRef.current("partner");
     }).subscribe();
-    channelRef.current = ch;
+    _channel = ch;
     return () => {
+      if (_channel === ch) _channel = null;
       supabase.removeChannel(ch);
-      channelRef.current = null;
     };
   }, [spaceId, myId]);
 
@@ -84,7 +97,7 @@ export function FloatingHearts({
             bottom: "96px",
             transform: "translateX(-50%)",
             color: h.origin === "mine" ? "var(--mine)" : "var(--partner)",
-            animation: `float-heart 1.5s ease-out forwards`,
+            animation: "float-heart 1.5s ease-out forwards",
             animationDelay: `${h.delay}ms`,
             opacity: 0,
           }}
@@ -94,23 +107,4 @@ export function FloatingHearts({
       ))}
     </div>
   );
-}
-
-/** Broadcast a heart event to the partner via the shared channel. */
-export async function broadcastHeart(spaceId: string, fromId: string) {
-  const ch = supabase.channel(`hearts:${spaceId}`);
-  await new Promise<void>((resolve) => {
-    ch.subscribe((status) => {
-      if (status === "SUBSCRIBED") resolve();
-    });
-    setTimeout(() => resolve(), 400);
-  });
-  await ch.send({
-    type: "broadcast",
-    event: "heart",
-    payload: { from: fromId, x: Math.random() },
-  });
-  // Don't remove — let the subscribed FloatingHearts instance own its channel.
-  // This temporary sender channel will be GC'd on page unload.
-  setTimeout(() => supabase.removeChannel(ch), 500);
 }
