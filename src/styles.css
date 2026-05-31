@@ -145,12 +145,12 @@
 .twined-write {
   stroke-dasharray: 1200;
   stroke-dashoffset: 1200;
-  animation: write-in 1.6s ease-in-out 0.2s forwards;
+  animation: write-in 1.0s ease-in-out 0.2s forwards;
 }
 
 .twined-fill {
   opacity: 0;
-  animation: fill-in 0.4s ease-in 1.6s forwards;
+  animation: fill-in 0.4s ease-in 1.0s forwards;
 }
 
 @keyframes write-in {
