@@ -52,16 +52,17 @@ function MapPage() {
   useEffect(() => {
     if (!mapContainer.current || mapRef.current) return;
     const container = mapContainer.current;
-
+    if (container.offsetWidth === 0 || container.offsetHeight === 0) return;
     let map: mapboxgl.Map;
     try {
       map = new mapboxgl.Map({
         container,
-        style: "mapbox://styles/mapbox/light-v11",
+        style: "mapbox://styles/mapbox/dark-v11",
         center: [0, 20],
         zoom: 1.4,
         attributionControl: false,
       });
+
     } catch (e) {
       setError(
         e instanceof Error
@@ -289,8 +290,9 @@ function MapPage() {
   };
 
   return (
-    <div className="relative h-full min-h-[60vh] w-full bg-card">
-      <div ref={mapContainer} className="absolute inset-0" />
+    <div className="relative w-full bg-card" style={{ height: 'calc(100dvh - 120px)' }}>
+      <div ref={mapContainer} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%' }} />
+
 
       {!mapReady && !error && (
         <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-xs pointer-events-none">
