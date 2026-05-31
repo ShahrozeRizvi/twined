@@ -44,6 +44,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <main className="flex-1 min-h-0 overflow-y-auto">{children}</main>
       <BottomNav />
       <PingListener me={profile} partner={partner} />
+      <FloatingHearts spaceId={profile.space_id} myId={profile.id} />
     </div>
   );
 }
