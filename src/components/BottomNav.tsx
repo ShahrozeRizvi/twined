@@ -333,7 +333,9 @@ export function BottomNav() {
           </button>
         </div>
 
-        {RIGHT_TABS.map((t) => renderTab(t.to, t.label, t.icon, false, 0))}
+        {RIGHT_TABS.map((t) =>
+          renderTab(t.to, t.label, t.icon, false, 0, t.to === "/map" && mapBadge)
+        )}
       </div>
     </nav>
   );
