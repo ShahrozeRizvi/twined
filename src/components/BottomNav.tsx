@@ -29,12 +29,17 @@ export function BottomNav() {
   const { pathname } = useLocation();
   const { user, profile, partner } = useTwined();
   const [todayBadge, setTodayBadge] = useState(0);
+  const [momentsBadge, setMomentsBadge] = useState(0);
+  const [mapBadge, setMapBadge] = useState(false);
   const [heartCount, setHeartCount] = useState(0);
 
   const spaceId = profile?.space_id ?? null;
   const userId = user?.id ?? null;
   const partnerId = partner?.id ?? null;
+  const partnerName = partner?.name ?? "Your partner";
   const onToday = pathname.startsWith("/today");
+  const onMoments = pathname.startsWith("/moments");
+  const onMap = pathname.startsWith("/map");
 
   // Today tab: unseen partner task activity
   useEffect(() => {
