@@ -137,14 +137,11 @@ function MapPage() {
         .order("created_at", { ascending: true });
       if (!cancelled) {
         setPoints((data as TrailPoint[]) || []);
-        const myLatestPoint = data?.filter((p) => p.user_id === profile.id).at(-1);
-        if (myLatestPoint && mapRef.current) {
-          mapRef.current.easeTo({
-            center: [myLatestPoint.lng, myLatestPoint.lat],
-            zoom: 15,
-            duration: 600,
-          });
+        const myPoints = (data as TrailPoint[] | null)?.filter((p) => p.user_id === profile.id);
+        if (myPoints?.length && mapRef.current) {
+          fitToTrail(mapRef.current, myPoints);
         }
+
       }
     })();
     return () => {
@@ -229,23 +226,15 @@ function MapPage() {
     }
 
     // smart zoom based on which trails are present
-    if (myPoints.length && !partnerPoints.length) {
-      const last = myPoints[myPoints.length - 1];
-      map.easeTo({ center: [last.lng, last.lat], zoom: 15 });
-    } else if (partnerPoints.length && !myPoints.length) {
-      const last = partnerPoints[partnerPoints.length - 1];
-      map.easeTo({ center: [last.lng, last.lat], zoom: 15 });
-    } else if (myPoints.length && partnerPoints.length) {
-      const myLast = myPoints[myPoints.length - 1];
-      const partnerLast = partnerPoints[partnerPoints.length - 1];
-      if (areFarApart(myLast, partnerLast)) {
-        map.easeTo({ center: [myLast.lng, myLast.lat], zoom: 15 });
-      } else {
-        const bounds = new mapboxgl.LngLatBounds();
-        [...myPoints, ...partnerPoints].forEach((p) => bounds.extend([p.lng, p.lat]));
-        map.fitBounds(bounds, { padding: 60, maxZoom: 15, duration: 800 });
-      }
+    if (myPoints.length > 0 && partnerPoints.length > 0 &&
+        !areFarApart(myPoints[myPoints.length - 1], partnerPoints[partnerPoints.length - 1])) {
+      fitToTrail(map, [...myPoints, ...partnerPoints], 100);
+    } else if (myPoints.length > 0) {
+      fitToTrail(map, myPoints);
+    } else if (partnerPoints.length > 0) {
+      fitToTrail(map, partnerPoints);
     }
+
   }, [points, profile, partner]);
 
   const startWatching = async () => {
@@ -297,12 +286,12 @@ function MapPage() {
       });
 
       if (isFirstPoint && mapRef.current) {
-        mapRef.current.easeTo({
-          center: [longitude, latitude],
-          zoom: 15,
-          duration: 800,
-        });
+        fitToTrail(mapRef.current, [{
+          id: "", user_id: profile.id, session_id: sess.id,
+          lat: latitude, lng: longitude, created_at: new Date().toISOString(),
+        }]);
       }
+
     };
     const onErr = (e: GeolocationPositionError) => setError(e.message);
 
