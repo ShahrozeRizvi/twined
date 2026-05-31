@@ -10,6 +10,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash.includes("type=recovery")) {
+      navigate({ to: "/auth", search: { mode: "create" } });
+      return;
+    }
     if (loading) return;
     if (!user) {
       navigate({ to: "/" });
