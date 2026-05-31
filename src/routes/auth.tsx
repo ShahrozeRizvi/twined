@@ -94,6 +94,54 @@ function AuthPage() {
     setError(null);
   };
 
+  if (pageMode === "reset") {
+    return (
+      <div className="min-h-[100dvh] flex flex-col px-6 pt-[max(env(safe-area-inset-top),48px)] pb-8">
+        <div className="flex flex-col items-center mb-10">
+          <Logo size="md" />
+          <p className="text-muted-foreground text-xs mt-3 tracking-wider">Set a new password</p>
+        </div>
+        <form onSubmit={onResetSubmit} className="max-w-sm w-full mx-auto flex flex-col gap-3">
+          {resetSuccess ? (
+            <p className="text-sm text-muted-foreground">Password updated. You're now logged in.</p>
+          ) : (
+            <>
+              <input
+                type="password"
+                required
+                minLength={8}
+                autoComplete="new-password"
+                placeholder="New password (min 8 chars)"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="bg-card border border-border rounded-xl px-4 py-3.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
+              />
+              <input
+                type="password"
+                required
+                minLength={8}
+                autoComplete="new-password"
+                placeholder="Confirm new password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="bg-card border border-border rounded-xl px-4 py-3.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
+              />
+              {error && <p className="text-xs text-destructive">{error}</p>}
+              <button
+                type="submit"
+                disabled={busy}
+                className="rounded-2xl px-6 py-4 font-medium mt-2 disabled:opacity-50"
+                style={{ background: "var(--primary)", color: "var(--primary-foreground)" }}
+              >
+                {busy ? "…" : "Update password"}
+              </button>
+            </>
+          )}
+        </form>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-[100dvh] flex flex-col px-6 pt-[max(env(safe-area-inset-top),48px)] pb-8">
       <div className="flex flex-col items-center mb-10">
@@ -102,6 +150,7 @@ function AuthPage() {
           {mode === "create" ? "Create your space" : "Join your person"}
         </p>
       </div>
+
 
       <div className="flex gap-2 mb-6 p-1 rounded-2xl bg-card border border-border max-w-sm w-full mx-auto">
         {(["signup", "login"] as const).map((t) => (
