@@ -232,7 +232,16 @@ function MapPage() {
         partnerMarker.current.setLngLat([partnerLast.lng, partnerLast.lat]);
       }
     }
-  }, [points, profile, partner]);
+
+    // Show/hide markers based on active tab
+    if (activeTab === "mine") {
+      myMarker.current?.getElement().style.setProperty("display", "block");
+      partnerMarker.current?.getElement().style.setProperty("display", "none");
+    } else {
+      partnerMarker.current?.getElement().style.setProperty("display", "block");
+      myMarker.current?.getElement().style.setProperty("display", "none");
+    }
+  }, [points, profile, partner, activeTab]);
 
   // reposition + restyle when active tab changes
   useEffect(() => {
@@ -250,6 +259,8 @@ function MapPage() {
       map.setPaintProperty("trail-mine", "line-width", 4);
       map.setPaintProperty("trail-partner", "line-opacity", 0.25);
       map.setPaintProperty("trail-partner", "line-width", 2);
+      myMarker.current?.getElement().style.setProperty("display", "block");
+      partnerMarker.current?.getElement().style.setProperty("display", "none");
     } else {
       const partnerPoints = partner
         ? points.filter((p) => p.user_id === partner.id)
@@ -263,6 +274,8 @@ function MapPage() {
       map.setPaintProperty("trail-partner", "line-width", 4);
       map.setPaintProperty("trail-mine", "line-opacity", 0.25);
       map.setPaintProperty("trail-mine", "line-width", 2);
+      partnerMarker.current?.getElement().style.setProperty("display", "block");
+      myMarker.current?.getElement().style.setProperty("display", "none");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, mapReady]);
