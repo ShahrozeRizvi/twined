@@ -135,7 +135,17 @@ function MapPage() {
         .eq("space_id", profile.space_id!)
         .gte("created_at", since.toISOString())
         .order("created_at", { ascending: true });
-      if (!cancelled) setPoints((data as TrailPoint[]) || []);
+      if (!cancelled) {
+        setPoints((data as TrailPoint[]) || []);
+        const myLatestPoint = data?.filter((p) => p.user_id === profile.id).at(-1);
+        if (myLatestPoint && mapRef.current) {
+          mapRef.current.easeTo({
+            center: [myLatestPoint.lng, myLatestPoint.lat],
+            zoom: 15,
+            duration: 600,
+          });
+        }
+      }
     })();
     return () => {
       cancelled = true;
