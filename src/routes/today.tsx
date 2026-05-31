@@ -1,11 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTwined, type Profile } from "@/lib/use-twined";
-import { localDateString } from "@/lib/twined";
 import { PixelAvatar, type AvatarPreset } from "@/components/PixelAvatar";
 import { AppShell } from "@/components/AppShell";
-import { Plus, Check, GripVertical } from "lucide-react";
+import { Plus, Check, GripVertical, Trash2 } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -42,26 +41,15 @@ function TodayPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loaded, setLoaded] = useState(false);
 
-  const myDate = useMemo(
-    () => (profile ? localDateString(profile.timezone) : null),
-    [profile]
-  );
-  const partnerDate = useMemo(
-    () => (partner ? localDateString(partner.timezone) : null),
-    [partner]
-  );
-
-  // initial load: today's tasks for both
+  // initial load: all tasks for the space
   useEffect(() => {
-    if (!profile?.space_id || !myDate) return;
+    if (!profile?.space_id) return;
     let cancelled = false;
-    const dates = [myDate, partnerDate].filter(Boolean) as string[];
     (async () => {
       const { data } = await supabase
         .from("tasks")
         .select("*")
         .eq("space_id", profile.space_id!)
-        .in("task_date", dates)
         .order("position", { ascending: true });
       if (!cancelled) {
         setTasks((data as Task[]) || []);
@@ -71,7 +59,7 @@ function TodayPage() {
     return () => {
       cancelled = true;
     };
-  }, [profile?.space_id, myDate, partnerDate]);
+  }, [profile?.space_id]);
 
   // realtime
   useEffect(() => {
@@ -112,9 +100,9 @@ function TodayPage() {
 
   if (!profile) return null;
 
-  const myTasks = tasks.filter((t) => t.user_id === profile.id && t.task_date === myDate);
+  const myTasks = tasks.filter((t) => t.user_id === profile.id);
   const partnerTasks = partner
-    ? tasks.filter((t) => t.user_id === partner.id && t.task_date === partnerDate)
+    ? tasks.filter((t) => t.user_id === partner.id)
     : [];
 
   return (
@@ -173,14 +161,12 @@ function TaskColumn({
     if (!profile?.space_id || !text.trim()) return;
     setBusy(true);
     try {
-      const today = localDateString(profile.timezone);
       const nextPos = (tasks[tasks.length - 1]?.position ?? -1) + 1;
       await supabase.from("tasks").insert({
         space_id: profile.space_id,
         user_id: profile.id,
         text: text.trim(),
         position: nextPos,
-        task_date: today,
       });
       setText("");
       inputRef.current?.focus();
@@ -396,6 +382,32 @@ function SortableTaskItem({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: t.id });
 
+  const [swipeX, setSwipeX] = useState(0);
+  const [swiping, setSwiping] = useState(false);
+  const startXRef = useRef<number | null>(null);
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    startXRef.current = e.touches[0].clientX;
+    setSwiping(true);
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (startXRef.current === null) return;
+    const dx = e.touches[0].clientX - startXRef.current;
+    if (dx < 0) setSwipeX(Math.max(dx, -160));
+  };
+  const onTouchEnd = () => {
+    setSwiping(false);
+    if (swipeX < -80) {
+      setSwipeX(-400);
+      onRemove(t);
+    } else {
+      setSwipeX(0);
+    }
+    startXRef.current = null;
+  };
+
+  const revealed = swipeX < -10;
+
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -406,40 +418,60 @@ function SortableTaskItem({
     <li
       ref={setNodeRef}
       style={style}
-      className="group flex items-start gap-1 px-1.5 py-1.5 rounded-lg bg-card"
+      className="relative rounded-lg overflow-hidden"
     >
-      <button
-        {...attributes}
-        {...listeners}
-        className="mt-0.5 text-muted-foreground opacity-0 group-hover:opacity-60 active:opacity-100 cursor-grab active:cursor-grabbing touch-none flex-shrink-0"
-        aria-label="Drag to reorder"
-      >
-        <GripVertical size={14} />
-      </button>
-      <button
-        onClick={() => onToggle(t)}
-        className="mt-0.5 w-4 h-4 rounded-md border flex items-center justify-center flex-shrink-0"
+      {revealed && (
+        <div
+          className="absolute inset-y-0 right-0 flex items-center justify-end pr-4"
+          style={{ background: "#EF4444", width: Math.min(-swipeX, 160) }}
+          aria-hidden
+        >
+          <Trash2 size={18} className="text-white" />
+        </div>
+      )}
+      <div
+        className="group flex items-start gap-1 px-1.5 py-1.5 bg-card relative"
         style={{
-          borderColor: t.completed ? accentVar : "var(--border)",
-          background: t.completed ? accentVar : "transparent",
+          transform: `translateX(${swipeX}px)`,
+          transition: swiping ? "none" : "transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1)",
         }}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
       >
-        {t.completed && <Check size={11} className="text-background" strokeWidth={3} />}
-      </button>
-      <span
-        className={`text-sm leading-tight flex-1 break-words ${
-          t.completed ? "line-through opacity-40" : ""
-        }`}
-      >
-        {t.text}
-      </span>
-      <button
-        onClick={() => onRemove(t)}
-        className="text-muted-foreground opacity-0 group-hover:opacity-100 active:opacity-100 text-xs"
-        aria-label="Delete"
-      >
-        ✕
-      </button>
+        <button
+          {...attributes}
+          {...listeners}
+          className="mt-0.5 text-muted-foreground opacity-0 group-hover:opacity-60 active:opacity-100 cursor-grab active:cursor-grabbing touch-none flex-shrink-0"
+          aria-label="Drag to reorder"
+        >
+          <GripVertical size={14} />
+        </button>
+        <button
+          onClick={() => onToggle(t)}
+          className="mt-0.5 w-4 h-4 rounded-md border flex items-center justify-center flex-shrink-0"
+          style={{
+            borderColor: t.completed ? accentVar : "var(--border)",
+            background: t.completed ? accentVar : "transparent",
+          }}
+        >
+          {t.completed && <Check size={11} className="text-background" strokeWidth={3} />}
+        </button>
+        <span
+          className={`text-sm leading-tight flex-1 break-words ${
+            t.completed ? "line-through opacity-40" : ""
+          }`}
+        >
+          {t.text}
+        </span>
+        <button
+          onClick={() => onRemove(t)}
+          className="text-muted-foreground opacity-0 group-hover:opacity-100 active:opacity-100 text-xs"
+          aria-label="Delete"
+        >
+          ✕
+        </button>
+      </div>
     </li>
   );
 }
