@@ -35,8 +35,8 @@ function WelcomePage() {
   }, [user, profile, loading, navigate]);
 
   useEffect(() => {
-    const fadeTimer = setTimeout(() => setSplashFading(true), 2000);
-    const hideTimer = setTimeout(() => setShowSplash(false), 2600);
+    const fadeTimer = setTimeout(() => setSplashFading(true), 1400);
+    const hideTimer = setTimeout(() => setShowSplash(false), 1900);
     return () => {
       clearTimeout(fadeTimer);
       clearTimeout(hideTimer);
@@ -81,7 +81,7 @@ function WelcomePage() {
               </text>
             </svg>
             <p
-              className="mt-8 text-sm text-muted-foreground tracking-wide"
+              className="mt-3 text-sm text-muted-foreground tracking-wide"
               style={{
                 opacity: 0,
                 animation: "fade-in 0.5s ease-in 0.8s forwards",
