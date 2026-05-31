@@ -59,7 +59,7 @@ function MapPage() {
     try {
       map = new mapboxgl.Map({
         container,
-        style: "mapbox://styles/mapbox/dark-v11",
+        style: "mapbox://styles/mapbox/light-v11",
         center: [0, 20],
         zoom: 1.4,
         attributionControl: false,
@@ -89,14 +89,14 @@ function MapPage() {
         type: "line",
         source: "trail-mine",
         layout: { "line-cap": "round", "line-join": "round" },
-        paint: { "line-color": "#9B7FE8", "line-width": 4, "line-opacity": 0.85 },
+        paint: { "line-color": "#9B7FE8", "line-width": 5, "line-opacity": 0.85 },
       });
       map.addLayer({
         id: "trail-partner",
         type: "line",
         source: "trail-partner",
         layout: { "line-cap": "round", "line-join": "round" },
-        paint: { "line-color": "#6DB5B0", "line-width": 4, "line-opacity": 0.85 },
+        paint: { "line-color": "#6DB5B0", "line-width": 5, "line-opacity": 0.85 },
       });
       map.resize();
       setMapReady(true);
