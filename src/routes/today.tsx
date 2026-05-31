@@ -6,7 +6,22 @@ import { localDateString } from "@/lib/twined";
 import { PixelAvatar, type AvatarPreset } from "@/components/PixelAvatar";
 import { AppShell } from "@/components/AppShell";
 import { YesterdaySheet } from "@/components/YesterdaySheet";
-import { Plus, Check } from "lucide-react";
+import { Plus, Check, GripVertical } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 export const Route = createFileRoute("/today")({
   component: () => <AppShell><TodayPage /></AppShell>,
