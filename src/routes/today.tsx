@@ -100,9 +100,9 @@ function TodayPage() {
 
   if (!profile) return null;
 
-  const myTasks = tasks.filter((t) => t.user_id === profile.id && t.task_date === myDate);
+  const myTasks = tasks.filter((t) => t.user_id === profile.id);
   const partnerTasks = partner
-    ? tasks.filter((t) => t.user_id === partner.id && t.task_date === partnerDate)
+    ? tasks.filter((t) => t.user_id === partner.id)
     : [];
 
   return (
