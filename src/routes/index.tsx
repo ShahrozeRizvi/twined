@@ -80,7 +80,13 @@ function WelcomePage() {
                 Twined
               </text>
             </svg>
-            <p className="twined-tagline text-sm text-muted-foreground tracking-wide">
+            <p
+              className="mt-8 text-sm text-muted-foreground tracking-wide"
+              style={{
+                opacity: 0,
+                animation: "fade-in 0.5s ease-in 0.8s forwards",
+              }}
+            >
               Two people. One quiet shared window.
             </p>
           </div>
