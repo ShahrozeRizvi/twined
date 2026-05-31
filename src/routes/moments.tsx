@@ -161,41 +161,15 @@ function MomentsPage() {
 
   // (Partner ping notifications are handled globally by PingListener in AppShell)
 
-
-  const sendPing = async () => {
-    if (!profile?.space_id) return;
-    await supabase.from("thinking_pings").insert({
-      space_id: profile.space_id,
-      from_user_id: profile.id,
-    });
-    setPingFlash("Sent 🤍");
-    setTimeout(() => setPingFlash(null), 2500);
-  };
-
   if (!profile) return null;
 
   return (
     <div className="relative pb-24">
       <div className="px-4 pt-4 pb-3 flex items-center justify-between">
         <h1 className="font-serif text-xl">Moments</h1>
-        <button
-          onClick={sendPing}
-          className="flex items-center gap-1.5 text-xs rounded-full border border-border px-3 py-1.5 active:scale-95 transition"
-          style={{ color: "var(--mine)" }}
-        >
-          <Heart size={13} fill="currentColor" />
-          Thinking of you
-        </button>
       </div>
 
-      {pingFlash && (
-        <div
-          className="mx-4 mb-3 rounded-2xl px-4 py-3 text-sm text-center"
-          style={{ background: "color-mix(in oklab, var(--mine) 20%, var(--card))" }}
-        >
-          {pingFlash}
-        </div>
-      )}
+
 
       <div className="px-4 pb-2">
         <button
