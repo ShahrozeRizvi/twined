@@ -42,6 +42,7 @@ function MapPage() {
   const watchId = useRef<number | null>(null);
   const intervalId = useRef<ReturnType<typeof setInterval> | null>(null);
   const activeSession = useRef<TrailSession | null>(null);
+  const lastPoint = useRef<{ lat: number; lng: number } | null>(null);
 
   const [sharing, setSharing] = useState(false);
   const [points, setPoints] = useState<TrailPoint[]>([]);
