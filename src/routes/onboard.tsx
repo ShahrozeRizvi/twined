@@ -74,12 +74,13 @@ function OnboardPage() {
     setBusy(true);
     setError(null);
     try {
+      const timezoneToSave = tz || detectTimezone();
       const { error: upErr } = await supabase
         .from("profiles")
         .update({
           name: name.trim(),
           photo_url: photoUrl,
-          timezone: tz,
+          timezone: timezoneToSave,
           avatar_preset: avatar,
         })
         .eq("id", user.id);
