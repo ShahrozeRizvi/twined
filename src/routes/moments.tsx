@@ -243,6 +243,7 @@ function Composer({ profile, onClose }: { profile: Profile; onClose: () => void 
   const [busy, setBusy] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
 
   const previewUrl = selectedFile ? URL.createObjectURL(selectedFile) : null;
 
