@@ -3,22 +3,26 @@ interface LogoProps {
   className?: string;
 }
 
-const SIZE_PX: Record<NonNullable<LogoProps["size"]>, number> = {
-  sm: 22,
-  md: 32,
-  lg: 56,
-  xl: 88,
-};
-
 export function Logo({ size = "lg", className = "" }: LogoProps) {
+  const sizes = {
+    sm: "text-2xl",
+    md: "text-4xl",
+    lg: "text-6xl",
+    xl: "text-8xl",
+  };
+
   return (
     <div
-      className={`tw-logo ${className}`}
-      style={{ fontSize: `${SIZE_PX[size]}px` }}
+      className={`${sizes[size]} ${className}`}
+      style={{
+        fontFamily: "'Pinyon Script', cursive",
+        color: "var(--mine)",
+        lineHeight: 1.1,
+        letterSpacing: "0.02em",
+      }}
       aria-label="Twined"
     >
-      <span className="the">the</span>
-      <span className="word">TWINED</span>
+      Twined
     </div>
   );
 }
