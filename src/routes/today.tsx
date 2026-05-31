@@ -42,7 +42,6 @@ function TodayPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loaded, setLoaded] = useState(false);
 
-
   const myDate = useMemo(
     () => (profile ? localDateString(profile.timezone) : null),
     [profile]
@@ -121,7 +120,26 @@ function TodayPage() {
   return (
     <div className="flex flex-col min-h-full">
       <div className="grid grid-cols-2 gap-2 p-3 pt-4 flex-1">
-
+        <TaskColumn
+          title={profile.name || "You"}
+          accent="mine"
+          person={profile}
+          tasks={myTasks}
+          canEdit
+          loaded={loaded}
+        />
+        <TaskColumn
+          title={partner?.name || "Them"}
+          accent="partner"
+          person={partner}
+          tasks={partnerTasks}
+          canEdit={false}
+          loaded={loaded}
+        />
+      </div>
+    </div>
+  );
+}
 
 function TaskColumn({
   title,
@@ -195,7 +213,6 @@ function TaskColumn({
         onToggle={toggle}
         onRemove={remove}
       />
-
 
       {canEdit && (
         <form
@@ -426,4 +443,3 @@ function SortableTaskItem({
     </li>
   );
 }
-
