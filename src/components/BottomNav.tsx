@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { CheckSquare, Sparkles, Map, User, Heart } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTwined } from "@/lib/use-twined";
 import { spawnLocalHeart, broadcastHeart } from "@/components/FloatingHearts";
@@ -16,6 +17,7 @@ const RIGHT_TABS = [
 ] as const;
 
 const lastSeenKey = (userId: string) => `twined_today_last_seen_${userId}`;
+const momentsLastSeenKey = (userId: string) => `twined_moments_last_seen_${userId}`;
 
 function todayMidnightIso() {
   const d = new Date();
