@@ -140,3 +140,30 @@
   0% { transform: translateY(0) scale(1); opacity: 1; }
   100% { transform: translateY(-60vh) scale(0.5); opacity: 0; }
 }
+
+/* Splash screen write-in animation */
+.twined-write {
+  stroke-dasharray: 1200;
+  stroke-dashoffset: 1200;
+  animation: write-in 1.6s ease-in-out 0.2s forwards;
+}
+
+.twined-fill {
+  opacity: 0;
+  animation: fill-in 0.4s ease-in 1.6s forwards;
+}
+
+@keyframes write-in {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes fill-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
