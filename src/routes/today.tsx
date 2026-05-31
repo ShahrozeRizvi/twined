@@ -264,3 +264,203 @@ function TaskColumn({
     </div>
   );
 }
+
+function TaskList({
+  tasks,
+  canEdit,
+  loaded,
+  accentVar,
+  person,
+  onToggle,
+  onRemove,
+}: {
+  tasks: Task[];
+  canEdit: boolean;
+  loaded: boolean;
+  accentVar: string;
+  person: Profile | null;
+  onToggle: (t: Task) => void;
+  onRemove: (t: Task) => void;
+}) {
+  const [localTasks, setLocalTasks] = useState<Task[]>(tasks);
+
+  useEffect(() => {
+    setLocalTasks(tasks);
+  }, [tasks]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = localTasks.findIndex((t) => t.id === active.id);
+    const newIndex = localTasks.findIndex((t) => t.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const reordered = arrayMove(localTasks, oldIndex, newIndex);
+    setLocalTasks(reordered);
+    await Promise.all(
+      reordered.map((t, i) =>
+        t.position === i
+          ? Promise.resolve()
+          : supabase.from("tasks").update({ position: i }).eq("id", t.id)
+      )
+    );
+  };
+
+  const emptyState = loaded && localTasks.length === 0 && (
+    <li className="flex flex-col items-center justify-center text-center py-10 px-2 gap-3">
+      {person && <PixelAvatar preset={person.avatar_preset as AvatarPreset} size={48} />}
+      <p className="text-xs text-muted-foreground">
+        {canEdit ? "What's on your plate today?" : "Nothing here yet."}
+      </p>
+    </li>
+  );
+
+  if (!canEdit) {
+    return (
+      <ul className="flex-1 px-2 pb-2 space-y-1 overflow-y-auto min-h-[200px]">
+        {emptyState}
+        {localTasks.map((t) => (
+          <StaticTaskItem
+            key={t.id}
+            task={t}
+            accentVar={accentVar}
+            canEdit={false}
+            onToggle={onToggle}
+            onRemove={onRemove}
+          />
+        ))}
+      </ul>
+    );
+  }
+
+  return (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={localTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+        <ul className="flex-1 px-2 pb-2 space-y-1 overflow-y-auto min-h-[200px]">
+          {emptyState}
+          {localTasks.map((t) => (
+            <SortableTaskItem
+              key={t.id}
+              task={t}
+              accentVar={accentVar}
+              onToggle={onToggle}
+              onRemove={onRemove}
+            />
+          ))}
+        </ul>
+      </SortableContext>
+    </DndContext>
+  );
+}
+
+function StaticTaskItem({
+  task: t,
+  accentVar,
+  canEdit,
+  onToggle,
+  onRemove,
+}: {
+  task: Task;
+  accentVar: string;
+  canEdit: boolean;
+  onToggle: (t: Task) => void;
+  onRemove: (t: Task) => void;
+}) {
+  return (
+    <li className="group flex items-start gap-2 px-1.5 py-1.5 rounded-lg">
+      <button
+        onClick={() => onToggle(t)}
+        disabled={!canEdit}
+        className="mt-0.5 w-4 h-4 rounded-md border flex items-center justify-center flex-shrink-0"
+        style={{
+          borderColor: t.completed ? accentVar : "var(--border)",
+          background: t.completed ? accentVar : "transparent",
+        }}
+      >
+        {t.completed && <Check size={11} className="text-background" strokeWidth={3} />}
+      </button>
+      <span
+        className={`text-sm leading-tight flex-1 break-words ${
+          t.completed ? "line-through opacity-40" : ""
+        }`}
+      >
+        {t.text}
+      </span>
+      {canEdit && (
+        <button
+          onClick={() => onRemove(t)}
+          className="text-muted-foreground opacity-0 group-hover:opacity-100 active:opacity-100 text-xs"
+          aria-label="Delete"
+        >
+          ✕
+        </button>
+      )}
+    </li>
+  );
+}
+
+function SortableTaskItem({
+  task: t,
+  accentVar,
+  onToggle,
+  onRemove,
+}: {
+  task: Task;
+  accentVar: string;
+  onToggle: (t: Task) => void;
+  onRemove: (t: Task) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: t.id });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <li
+      ref={setNodeRef}
+      style={style}
+      className="group flex items-start gap-1 px-1.5 py-1.5 rounded-lg bg-card"
+    >
+      <button
+        {...attributes}
+        {...listeners}
+        className="mt-0.5 text-muted-foreground opacity-0 group-hover:opacity-60 active:opacity-100 cursor-grab active:cursor-grabbing touch-none flex-shrink-0"
+        aria-label="Drag to reorder"
+      >
+        <GripVertical size={14} />
+      </button>
+      <button
+        onClick={() => onToggle(t)}
+        className="mt-0.5 w-4 h-4 rounded-md border flex items-center justify-center flex-shrink-0"
+        style={{
+          borderColor: t.completed ? accentVar : "var(--border)",
+          background: t.completed ? accentVar : "transparent",
+        }}
+      >
+        {t.completed && <Check size={11} className="text-background" strokeWidth={3} />}
+      </button>
+      <span
+        className={`text-sm leading-tight flex-1 break-words ${
+          t.completed ? "line-through opacity-40" : ""
+        }`}
+      >
+        {t.text}
+      </span>
+      <button
+        onClick={() => onRemove(t)}
+        className="text-muted-foreground opacity-0 group-hover:opacity-100 active:opacity-100 text-xs"
+        aria-label="Delete"
+      >
+        ✕
+      </button>
+    </li>
+  );
+}
+
