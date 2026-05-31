@@ -252,6 +252,8 @@ function MapPage() {
     const onPos = async (pos: GeolocationPosition) => {
       const { latitude, longitude } = pos.coords;
 
+      const isFirstPoint = lastPoint.current === null;
+
       // Skip if moved less than 20 meters from last recorded point
       if (lastPoint.current) {
         const dist = getDistance(
@@ -274,6 +276,14 @@ function MapPage() {
         lat: latitude,
         lng: longitude,
       });
+
+      if (isFirstPoint && mapRef.current) {
+        mapRef.current.easeTo({
+          center: [longitude, latitude],
+          zoom: 15,
+          duration: 800,
+        });
+      }
     };
     const onErr = (e: GeolocationPositionError) => setError(e.message);
 
