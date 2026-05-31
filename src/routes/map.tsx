@@ -52,16 +52,17 @@ function MapPage() {
   useEffect(() => {
     if (!mapContainer.current || mapRef.current) return;
     const container = mapContainer.current;
-
+    if (container.offsetWidth === 0 || container.offsetHeight === 0) return;
     let map: mapboxgl.Map;
     try {
       map = new mapboxgl.Map({
         container,
-        style: "mapbox://styles/mapbox/light-v11",
+        style: "mapbox://styles/mapbox/dark-v11",
         center: [0, 20],
         zoom: 1.4,
         attributionControl: false,
       });
+
     } catch (e) {
       setError(
         e instanceof Error
