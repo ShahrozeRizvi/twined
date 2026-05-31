@@ -135,7 +135,17 @@ function MapPage() {
         .eq("space_id", profile.space_id!)
         .gte("created_at", since.toISOString())
         .order("created_at", { ascending: true });
-      if (!cancelled) setPoints((data as TrailPoint[]) || []);
+      if (!cancelled) {
+        setPoints((data as TrailPoint[]) || []);
+        const myLatestPoint = data?.filter((p) => p.user_id === profile.id).at(-1);
+        if (myLatestPoint && mapRef.current) {
+          mapRef.current.easeTo({
+            center: [myLatestPoint.lng, myLatestPoint.lat],
+            zoom: 15,
+            duration: 600,
+          });
+        }
+      }
     })();
     return () => {
       cancelled = true;
@@ -218,14 +228,23 @@ function MapPage() {
       }
     }
 
-    // fit bounds if we have multiple points
-    const all = [...myPoints, ...partnerPoints];
-    if (all.length === 1) {
-      map.easeTo({ center: [all[0].lng, all[0].lat], zoom: 12 });
-    } else if (all.length > 1) {
-      const bounds = new mapboxgl.LngLatBounds();
-      all.forEach((p) => bounds.extend([p.lng, p.lat]));
-      map.fitBounds(bounds, { padding: 60, maxZoom: 13, duration: 800 });
+    // smart zoom based on which trails are present
+    if (myPoints.length && !partnerPoints.length) {
+      const last = myPoints[myPoints.length - 1];
+      map.easeTo({ center: [last.lng, last.lat], zoom: 15 });
+    } else if (partnerPoints.length && !myPoints.length) {
+      const last = partnerPoints[partnerPoints.length - 1];
+      map.easeTo({ center: [last.lng, last.lat], zoom: 15 });
+    } else if (myPoints.length && partnerPoints.length) {
+      const myLast = myPoints[myPoints.length - 1];
+      const partnerLast = partnerPoints[partnerPoints.length - 1];
+      if (areFarApart(myLast, partnerLast)) {
+        map.easeTo({ center: [myLast.lng, myLast.lat], zoom: 15 });
+      } else {
+        const bounds = new mapboxgl.LngLatBounds();
+        [...myPoints, ...partnerPoints].forEach((p) => bounds.extend([p.lng, p.lat]));
+        map.fitBounds(bounds, { padding: 60, maxZoom: 15, duration: 800 });
+      }
     }
   }, [points, profile, partner]);
 
@@ -252,6 +271,8 @@ function MapPage() {
     const onPos = async (pos: GeolocationPosition) => {
       const { latitude, longitude } = pos.coords;
 
+      const isFirstPoint = lastPoint.current === null;
+
       // Skip if moved less than 20 meters from last recorded point
       if (lastPoint.current) {
         const dist = getDistance(
@@ -274,6 +295,14 @@ function MapPage() {
         lat: latitude,
         lng: longitude,
       });
+
+      if (isFirstPoint && mapRef.current) {
+        mapRef.current.easeTo({
+          center: [longitude, latitude],
+          zoom: 15,
+          duration: 800,
+        });
+      }
     };
     const onErr = (e: GeolocationPositionError) => setError(e.message);
 
@@ -376,6 +405,20 @@ function MapPage() {
       </div>
     </div>
   );
+}
+
+function areFarApart(p1: TrailPoint, p2: TrailPoint): boolean {
+  const R = 6371;
+  const dLat = ((p2.lat - p1.lat) * Math.PI) / 180;
+  const dLng = ((p2.lng - p1.lng) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((p1.lat * Math.PI) / 180) *
+      Math.cos((p2.lat * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+  const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return dist > 500;
 }
 
 function emptyLine(): GeoJSON.FeatureCollection<GeoJSON.LineString> {
