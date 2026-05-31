@@ -103,6 +103,88 @@ export function BottomNav() {
     }
   }, [onToday, userId]);
 
+  // Moments tab: unseen partner moments
+  useEffect(() => {
+    if (!userId || !spaceId || !partnerId) {
+      setMomentsBadge(0);
+      return;
+    }
+    const lastSeen =
+      typeof window !== "undefined"
+        ? localStorage.getItem(momentsLastSeenKey(userId)) ?? new Date(0).toISOString()
+        : new Date(0).toISOString();
+    let cancelled = false;
+    (async () => {
+      const { count } = await supabase
+        .from("moments")
+        .select("id", { count: "exact", head: true })
+        .eq("space_id", spaceId)
+        .eq("user_id", partnerId)
+        .gt("created_at", lastSeen);
+      if (!cancelled && typeof count === "number") setMomentsBadge(count);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, spaceId, partnerId]);
+
+  useEffect(() => {
+    if (!spaceId || !partnerId) return;
+    const ch = supabase
+      .channel(`moments-badge:${spaceId}:${Math.random().toString(36).slice(2)}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "moments", filter: `space_id=eq.${spaceId}` },
+        (payload) => {
+          const row = payload.new as { user_id?: string };
+          if (row.user_id === partnerId && !onMoments) setMomentsBadge((n) => n + 1);
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [spaceId, partnerId, onMoments]);
+
+  useEffect(() => {
+    if (onMoments && userId) {
+      setMomentsBadge(0);
+      try {
+        localStorage.setItem(momentsLastSeenKey(userId), new Date().toISOString());
+      } catch {
+        // ignore
+      }
+    }
+  }, [onMoments, userId]);
+
+  // Map tab: partner started a sharing session
+  useEffect(() => {
+    if (!spaceId || !partnerId) return;
+    const ch = supabase
+      .channel(`map-badge:${spaceId}:${Math.random().toString(36).slice(2)}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "trail_sessions", filter: `space_id=eq.${spaceId}` },
+        (payload) => {
+          const row = payload.new as { user_id?: string; active?: boolean };
+          if (row.user_id === partnerId && row.active) {
+            if (!onMap) setMapBadge(true);
+            toast(`${partnerName} is starting their day 📍`);
+          }
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [spaceId, partnerId, onMap, partnerName]);
+
+  useEffect(() => {
+    if (onMap) setMapBadge(false);
+  }, [onMap]);
+
+
+
   // Heart counter: my pings sent today (re-queries on mount / day change)
   useEffect(() => {
     if (!userId) return;
