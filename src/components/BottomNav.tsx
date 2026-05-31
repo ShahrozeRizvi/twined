@@ -290,9 +290,12 @@ export function BottomNav() {
       style={{ paddingBottom: "max(env(safe-area-inset-bottom), 8px)" }}
     >
       <div className="grid grid-cols-5 px-2 pt-2 items-end">
-        {LEFT_TABS.map((t) =>
-          renderTab(t.to, t.label, t.icon, t.to === "/today" && todayBadge > 0, todayBadge)
-        )}
+        {LEFT_TABS.map((t) => {
+          const isToday = t.to === "/today";
+          const isMoments = t.to === "/moments";
+          const value = isToday ? todayBadge : isMoments ? momentsBadge : 0;
+          return renderTab(t.to, t.label, t.icon, value > 0, value);
+        })}
 
         {/* Center heart action */}
         <div className="flex justify-center">
