@@ -218,14 +218,23 @@ function MapPage() {
       }
     }
 
-    // fit bounds if we have multiple points
-    const all = [...myPoints, ...partnerPoints];
-    if (all.length === 1) {
-      map.easeTo({ center: [all[0].lng, all[0].lat], zoom: 12 });
-    } else if (all.length > 1) {
-      const bounds = new mapboxgl.LngLatBounds();
-      all.forEach((p) => bounds.extend([p.lng, p.lat]));
-      map.fitBounds(bounds, { padding: 60, maxZoom: 13, duration: 800 });
+    // smart zoom based on which trails are present
+    if (myPoints.length && !partnerPoints.length) {
+      const last = myPoints[myPoints.length - 1];
+      map.easeTo({ center: [last.lng, last.lat], zoom: 15 });
+    } else if (partnerPoints.length && !myPoints.length) {
+      const last = partnerPoints[partnerPoints.length - 1];
+      map.easeTo({ center: [last.lng, last.lat], zoom: 15 });
+    } else if (myPoints.length && partnerPoints.length) {
+      const myLast = myPoints[myPoints.length - 1];
+      const partnerLast = partnerPoints[partnerPoints.length - 1];
+      if (areFarApart(myLast, partnerLast)) {
+        map.easeTo({ center: [myLast.lng, myLast.lat], zoom: 15 });
+      } else {
+        const bounds = new mapboxgl.LngLatBounds();
+        [...myPoints, ...partnerPoints].forEach((p) => bounds.extend([p.lng, p.lat]));
+        map.fitBounds(bounds, { padding: 60, maxZoom: 15, duration: 800 });
+      }
     }
   }, [points, profile, partner]);
 
