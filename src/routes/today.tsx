@@ -161,14 +161,12 @@ function TaskColumn({
     if (!profile?.space_id || !text.trim()) return;
     setBusy(true);
     try {
-      const today = localDateString(profile.timezone);
       const nextPos = (tasks[tasks.length - 1]?.position ?? -1) + 1;
       await supabase.from("tasks").insert({
         space_id: profile.space_id,
         user_id: profile.id,
         text: text.trim(),
         position: nextPos,
-        task_date: today,
       });
       setText("");
       inputRef.current?.focus();
