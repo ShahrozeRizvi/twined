@@ -241,47 +241,54 @@ function Composer({ profile, onClose }: { profile: Profile; onClose: () => void 
   const [text, setText] = useState("");
   const [uploading, setUploading] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const sendText = async () => {
-    if (!text.trim() || !profile.space_id) return;
-    setBusy(true);
-    try {
-      await supabase.from("moments").insert({
-        space_id: profile.space_id,
-        user_id: profile.id,
-        type: "text",
-        content: text.trim().slice(0, 280),
-      });
-      onClose();
-    } finally {
-      setBusy(false);
+  const previewUrl = selectedFile ? URL.createObjectURL(selectedFile) : null;
+
+  const handlePost = async () => {
+    if (!profile.space_id) return;
+    if (selectedFile) {
+      setUploading(true);
+      try {
+        const ext = selectedFile.name.split(".").pop() || "jpg";
+        const path = `${profile.id}/${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from("moments-media")
+          .upload(path, selectedFile);
+        if (upErr) throw upErr;
+        const { data: pub } = supabase.storage.from("moments-media").getPublicUrl(path);
+        await supabase.from("moments").insert({
+          space_id: profile.space_id,
+          user_id: profile.id,
+          type: "photo",
+          media_url: pub.publicUrl,
+          content: text.trim() ? text.trim().slice(0, 280) : null,
+        });
+        setSelectedFile(null);
+        onClose();
+      } finally {
+        setUploading(false);
+      }
+      return;
+    }
+    if (text.trim()) {
+      setBusy(true);
+      try {
+        await supabase.from("moments").insert({
+          space_id: profile.space_id,
+          user_id: profile.id,
+          type: "text",
+          content: text.trim().slice(0, 280),
+        });
+        onClose();
+      } finally {
+        setBusy(false);
+      }
     }
   };
 
-  const sendPhoto = async (file: File) => {
-    if (!profile.space_id) return;
-    setUploading(true);
-    try {
-      const ext = file.name.split(".").pop() || "jpg";
-      const path = `${profile.id}/${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from("moments-media")
-        .upload(path, file);
-      if (upErr) throw upErr;
-      const { data: pub } = supabase.storage.from("moments-media").getPublicUrl(path);
-      await supabase.from("moments").insert({
-        space_id: profile.space_id,
-        user_id: profile.id,
-        type: "photo",
-        media_url: pub.publicUrl,
-        content: text.trim() ? text.trim().slice(0, 280) : null,
-      });
-      onClose();
-    } finally {
-      setUploading(false);
-    }
-  };
+  const canPost = !!text.trim() || !!selectedFile;
 
   return (
     <div className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm flex items-end sm:items-center justify-center">
@@ -295,6 +302,23 @@ function Composer({ profile, onClose }: { profile: Profile; onClose: () => void 
             <X size={18} />
           </button>
         </div>
+
+        {previewUrl && (
+          <div className="relative self-start">
+            <img
+              src={previewUrl}
+              alt="Preview"
+              className="rounded-xl max-h-[200px] object-cover"
+            />
+            <button
+              onClick={() => setSelectedFile(null)}
+              className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-background border border-border flex items-center justify-center shadow-sm"
+              aria-label="Remove photo"
+            >
+              <X size={12} />
+            </button>
+          </div>
+        )}
 
         <textarea
           value={text}
@@ -312,7 +336,11 @@ function Composer({ profile, onClose }: { profile: Profile; onClose: () => void 
           type="file"
           accept="image/*"
           className="hidden"
-          onChange={(e) => e.target.files?.[0] && sendPhoto(e.target.files[0])}
+          onChange={(e) => {
+            const file = e.target.files?.[0] || null;
+            if (file) setSelectedFile(file);
+            if (e.target.value) e.target.value = "";
+          }}
         />
 
         <div className="flex gap-2">
@@ -325,8 +353,8 @@ function Composer({ profile, onClose }: { profile: Profile; onClose: () => void 
             {uploading ? "Uploading…" : "Photo"}
           </button>
           <button
-            onClick={sendText}
-            disabled={!text.trim() || busy}
+            onClick={handlePost}
+            disabled={!canPost || busy || uploading}
             className="flex-1 flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-medium disabled:opacity-40"
             style={{ background: "var(--mine)", color: "var(--primary-foreground)" }}
           >
