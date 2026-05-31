@@ -28,7 +28,7 @@ export function TimezoneHeader({ me, partner }: TimezoneHeaderProps) {
           now={now}
           align="start"
         />
-        <span className="text-muted-foreground text-xs tracking-widest mt-2">←→</span>
+        <Logo size="sm" />
         <PersonCell
           name={partner?.name || "Your person"}
           tz={partner?.timezone || me.timezone}
