@@ -154,9 +154,10 @@ function OnboardPage() {
       />
 
       <label className="text-xs text-muted-foreground mb-2 mt-2">Timezone</label>
-      <div className="mb-6">
+      <div className="mb-1">
         <TimezonePicker value={tz} onChange={setTz} detected={detectedTz} />
       </div>
+      <p className="text-xs text-muted-foreground mb-6">Auto-detected from your device. Change if needed.</p>
 
 
       <label className="text-xs text-muted-foreground mb-3">Pick your pixel</label>
