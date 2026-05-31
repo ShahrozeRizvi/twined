@@ -250,23 +250,42 @@ function MapPage() {
     }
 
     const onPos = async (pos: GeolocationPosition) => {
+      const { latitude, longitude } = pos.coords;
+
+      // Skip if moved less than 20 meters from last recorded point
+      if (lastPoint.current) {
+        const dist = getDistance(
+          lastPoint.current.lat,
+          lastPoint.current.lng,
+          latitude,
+          longitude
+        );
+        if (dist < 20) return;
+      }
+
+      lastPoint.current = { lat: latitude, lng: longitude };
+
       const sess = activeSession.current;
       if (!sess || !profile.space_id) return;
       await supabase.from("trail_points").insert({
         space_id: profile.space_id,
         user_id: profile.id,
         session_id: sess.id,
-        lat: pos.coords.latitude,
-        lng: pos.coords.longitude,
+        lat: latitude,
+        lng: longitude,
       });
     };
     const onErr = (e: GeolocationPositionError) => setError(e.message);
 
     // capture one immediately
-    navigator.geolocation.getCurrentPosition(onPos, onErr, { enableHighAccuracy: true });
-    intervalId.current = setInterval(() => {
-      navigator.geolocation.getCurrentPosition(onPos, onErr, { enableHighAccuracy: true });
-    }, 300_000);
+    navigator.geolocation.getCurrentPosition(onPos, onErr, {
+      enableHighAccuracy: true,
+    });
+    watchId.current = navigator.geolocation.watchPosition(onPos, onErr, {
+      enableHighAccuracy: true,
+      maximumAge: 0,
+      timeout: 30000,
+    });
     setSharing(true);
   };
 
