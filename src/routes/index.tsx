@@ -49,36 +49,41 @@ function WelcomePage() {
         <div
           className={`fixed inset-0 z-50 flex items-center justify-center bg-background transition-opacity duration-[600ms] ${splashFading ? "opacity-0" : "opacity-100"}`}
         >
-          <svg
-            viewBox="0 0 400 100"
-            className="w-64"
-            aria-label="Twined"
-          >
-            <text
-              x="50%"
-              y="60%"
-              dominantBaseline="middle"
-              textAnchor="middle"
-              fill="none"
-              stroke="var(--mine)"
-              strokeWidth="1.5"
-              className="twined-write"
-              style={{ fontFamily: "'Pinyon Script', cursive", fontSize: "72px" }}
+          <div className="flex flex-col items-center gap-6">
+            <svg
+              viewBox="0 0 400 100"
+              className="w-64"
+              aria-label="Twined"
             >
-              Twined
-            </text>
-            <text
-              x="50%"
-              y="60%"
-              dominantBaseline="middle"
-              textAnchor="middle"
-              fill="var(--mine)"
-              className="twined-fill"
-              style={{ fontFamily: "'Pinyon Script', cursive", fontSize: "72px" }}
-            >
-              Twined
-            </text>
-          </svg>
+              <text
+                x="50%"
+                y="60%"
+                dominantBaseline="middle"
+                textAnchor="middle"
+                fill="none"
+                stroke="var(--mine)"
+                strokeWidth="1.5"
+                className="twined-write"
+                style={{ fontFamily: "'Pinyon Script', cursive", fontSize: "72px" }}
+              >
+                Twined
+              </text>
+              <text
+                x="50%"
+                y="60%"
+                dominantBaseline="middle"
+                textAnchor="middle"
+                fill="var(--mine)"
+                className="twined-fill"
+                style={{ fontFamily: "'Pinyon Script', cursive", fontSize: "72px" }}
+              >
+                Twined
+              </text>
+            </svg>
+            <p className="twined-tagline text-sm text-muted-foreground tracking-wide">
+              Two people. One quiet shared window.
+            </p>
+          </div>
         </div>
       )}
       <div className="min-h-[100dvh] flex flex-col items-center justify-between px-6 pt-[max(env(safe-area-inset-top),48px)] pb-[max(env(safe-area-inset-bottom),32px)]">
@@ -110,9 +115,6 @@ function WelcomePage() {
           >
             Join a Space
           </Link>
-          <p className="text-center text-xs text-muted-foreground mt-3 px-4">
-            Two people. One quiet shared window.
-          </p>
         </div>
       </div>
     </>

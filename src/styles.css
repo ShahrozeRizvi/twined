@@ -167,3 +167,19 @@
     opacity: 1;
   }
 }
+
+.twined-tagline {
+  opacity: 0;
+  animation: tagline-fade-in 0.5s ease-out 1.8s forwards;
+}
+
+@keyframes tagline-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
