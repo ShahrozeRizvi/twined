@@ -97,7 +97,7 @@ function AuthPage() {
     setError(null);
   };
 
-  if (pageMode === "reset") {
+  if (resetMode) {
     return (
       <div className="min-h-[100dvh] flex flex-col px-6 pt-[max(env(safe-area-inset-top),48px)] pb-8">
         <div className="flex flex-col items-center mb-10">
