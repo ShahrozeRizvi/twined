@@ -115,9 +115,6 @@ function WelcomePage() {
           >
             Join a Space
           </Link>
-          <p className="text-center text-xs text-muted-foreground mt-3 px-4">
-            Two people. One quiet shared window.
-          </p>
         </div>
       </div>
     </>
