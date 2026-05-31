@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { CheckSquare, Sparkles, Map, User, Heart } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTwined } from "@/lib/use-twined";
 import { spawnLocalHeart, broadcastHeart } from "@/components/FloatingHearts";
@@ -16,6 +17,7 @@ const RIGHT_TABS = [
 ] as const;
 
 const lastSeenKey = (userId: string) => `twined_today_last_seen_${userId}`;
+const momentsLastSeenKey = (userId: string) => `twined_moments_last_seen_${userId}`;
 
 function todayMidnightIso() {
   const d = new Date();
@@ -27,12 +29,17 @@ export function BottomNav() {
   const { pathname } = useLocation();
   const { user, profile, partner } = useTwined();
   const [todayBadge, setTodayBadge] = useState(0);
+  const [momentsBadge, setMomentsBadge] = useState(0);
+  const [mapBadge, setMapBadge] = useState(false);
   const [heartCount, setHeartCount] = useState(0);
 
   const spaceId = profile?.space_id ?? null;
   const userId = user?.id ?? null;
   const partnerId = partner?.id ?? null;
+  const partnerName = partner?.name ?? "Your partner";
   const onToday = pathname.startsWith("/today");
+  const onMoments = pathname.startsWith("/moments");
+  const onMap = pathname.startsWith("/map");
 
   // Today tab: unseen partner task activity
   useEffect(() => {
@@ -96,6 +103,88 @@ export function BottomNav() {
     }
   }, [onToday, userId]);
 
+  // Moments tab: unseen partner moments
+  useEffect(() => {
+    if (!userId || !spaceId || !partnerId) {
+      setMomentsBadge(0);
+      return;
+    }
+    const lastSeen =
+      typeof window !== "undefined"
+        ? localStorage.getItem(momentsLastSeenKey(userId)) ?? new Date(0).toISOString()
+        : new Date(0).toISOString();
+    let cancelled = false;
+    (async () => {
+      const { count } = await supabase
+        .from("moments")
+        .select("id", { count: "exact", head: true })
+        .eq("space_id", spaceId)
+        .eq("user_id", partnerId)
+        .gt("created_at", lastSeen);
+      if (!cancelled && typeof count === "number") setMomentsBadge(count);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, spaceId, partnerId]);
+
+  useEffect(() => {
+    if (!spaceId || !partnerId) return;
+    const ch = supabase
+      .channel(`moments-badge:${spaceId}:${Math.random().toString(36).slice(2)}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "moments", filter: `space_id=eq.${spaceId}` },
+        (payload) => {
+          const row = payload.new as { user_id?: string };
+          if (row.user_id === partnerId && !onMoments) setMomentsBadge((n) => n + 1);
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [spaceId, partnerId, onMoments]);
+
+  useEffect(() => {
+    if (onMoments && userId) {
+      setMomentsBadge(0);
+      try {
+        localStorage.setItem(momentsLastSeenKey(userId), new Date().toISOString());
+      } catch {
+        // ignore
+      }
+    }
+  }, [onMoments, userId]);
+
+  // Map tab: partner started a sharing session
+  useEffect(() => {
+    if (!spaceId || !partnerId) return;
+    const ch = supabase
+      .channel(`map-badge:${spaceId}:${Math.random().toString(36).slice(2)}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "trail_sessions", filter: `space_id=eq.${spaceId}` },
+        (payload) => {
+          const row = payload.new as { user_id?: string; active?: boolean };
+          if (row.user_id === partnerId && row.active) {
+            if (!onMap) setMapBadge(true);
+            toast(`${partnerName} is starting their day 📍`);
+          }
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [spaceId, partnerId, onMap, partnerName]);
+
+  useEffect(() => {
+    if (onMap) setMapBadge(false);
+  }, [onMap]);
+
+
+
   // Heart counter: my pings sent today (re-queries on mount / day change)
   useEffect(() => {
     if (!userId) return;
@@ -148,7 +237,8 @@ export function BottomNav() {
     label: string,
     Icon: typeof CheckSquare,
     showBadge: boolean,
-    badgeValue: number
+    badgeValue: number,
+    showDot = false
   ) => {
     const active = pathname.startsWith(to);
     return (
@@ -176,9 +266,21 @@ export function BottomNav() {
               {badgeValue > 9 ? "9+" : badgeValue}
             </span>
           )}
+          {showDot && !showBadge && (
+            <span
+              className="absolute -top-1 -right-1 rounded-full animate-pulse"
+              style={{
+                width: 8,
+                height: 8,
+                backgroundColor: "var(--mine)",
+                boxShadow: "0 0 0 2px var(--card)",
+              }}
+            />
+          )}
         </span>
         <span className="text-[11px] font-medium tracking-wide">{label}</span>
       </Link>
+
     );
   };
 
@@ -188,9 +290,12 @@ export function BottomNav() {
       style={{ paddingBottom: "max(env(safe-area-inset-bottom), 8px)" }}
     >
       <div className="grid grid-cols-5 px-2 pt-2 items-end">
-        {LEFT_TABS.map((t) =>
-          renderTab(t.to, t.label, t.icon, t.to === "/today" && todayBadge > 0, todayBadge)
-        )}
+        {LEFT_TABS.map((t) => {
+          const isToday = t.to === "/today";
+          const isMoments = t.to === "/moments";
+          const value = isToday ? todayBadge : isMoments ? momentsBadge : 0;
+          return renderTab(t.to, t.label, t.icon, value > 0, value);
+        })}
 
         {/* Center heart action */}
         <div className="flex justify-center">
@@ -228,7 +333,9 @@ export function BottomNav() {
           </button>
         </div>
 
-        {RIGHT_TABS.map((t) => renderTab(t.to, t.label, t.icon, false, 0))}
+        {RIGHT_TABS.map((t) =>
+          renderTab(t.to, t.label, t.icon, false, 0, t.to === "/map" && mapBadge)
+        )}
       </div>
     </nav>
   );
