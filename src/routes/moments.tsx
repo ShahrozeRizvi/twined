@@ -76,7 +76,7 @@ function MomentsPage() {
   const [yesterdayMoments, setYesterdayMoments] = useState<Moment[] | null>(null);
   const [loadingYesterday, setLoadingYesterday] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
-  const [pingFlash, setPingFlash] = useState<string | null>(null);
+  
 
   const loadYesterday = async () => {
     if (!profile?.space_id) return;
