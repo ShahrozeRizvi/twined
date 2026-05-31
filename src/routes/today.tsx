@@ -5,7 +5,6 @@ import { useTwined, type Profile } from "@/lib/use-twined";
 import { localDateString } from "@/lib/twined";
 import { PixelAvatar, type AvatarPreset } from "@/components/PixelAvatar";
 import { AppShell } from "@/components/AppShell";
-import { YesterdaySheet } from "@/components/YesterdaySheet";
 import { Plus, Check, GripVertical } from "lucide-react";
 import {
   DndContext,
@@ -42,7 +41,7 @@ function TodayPage() {
   const { profile, partner } = useTwined();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loaded, setLoaded] = useState(false);
-  const [showYesterday, setShowYesterday] = useState(false);
+
 
   const myDate = useMemo(
     () => (profile ? localDateString(profile.timezone) : null),
@@ -121,43 +120,7 @@ function TodayPage() {
 
   return (
     <div className="flex flex-col min-h-full">
-      <div className="px-4 pt-3 pb-1 flex justify-end">
-        <button
-          onClick={() => setShowYesterday(true)}
-          className="text-xs text-muted-foreground hover:text-foreground transition"
-        >
-          ← Yesterday
-        </button>
-      </div>
-      <div className="grid grid-cols-2 gap-2 p-3 pt-1 flex-1">
-        <TaskColumn
-          title={profile.name || "You"}
-          accent="mine"
-          person={profile}
-          tasks={myTasks}
-          canEdit
-          loaded={loaded}
-        />
-        <TaskColumn
-          title={partner?.name || "Them"}
-          accent="partner"
-          person={partner}
-          tasks={partnerTasks}
-          canEdit={false}
-          loaded={loaded}
-        />
-      </div>
-      {showYesterday && (
-        <YesterdaySheet
-          spaceId={profile.space_id!}
-          me={profile}
-          partner={partner}
-          onClose={() => setShowYesterday(false)}
-        />
-      )}
-    </div>
-  );
-}
+      <div className="grid grid-cols-2 gap-2 p-3 pt-4 flex-1">
 
 
 function TaskColumn({
