@@ -21,6 +21,8 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [forgotMode, setForgotMode] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,24 +30,37 @@ function AuthPage() {
     setBusy(true);
 
     try {
-      if (tab === "signup") {
+      if (forgotMode) {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin + "/auth",
+        });
+        if (error) throw error;
+        setResetSent(true);
+      } else if (tab === "signup") {
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: { emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
+        navigate({ to: "/onboard", search: { mode } });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        navigate({ to: "/onboard", search: { mode } });
       }
-      // proceed: signed-in user without a profile name will land on onboard
-      navigate({ to: "/onboard", search: { mode } });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setBusy(false);
     }
+  };
+
+  const switchTab = (t: "signup" | "login") => {
+    setTab(t);
+    setForgotMode(false);
+    setResetSent(false);
+    setError(null);
   };
 
   return (
@@ -61,11 +76,11 @@ function AuthPage() {
         {(["signup", "login"] as const).map((t) => (
           <button
             key={t}
-            onClick={() => setTab(t)}
+            onClick={() => switchTab(t)}
             className="flex-1 rounded-xl py-2 text-sm font-medium transition-colors"
             style={{
-              background: tab === t ? "var(--mine)" : "transparent",
-              color: tab === t ? "var(--primary-foreground)" : "var(--muted-foreground)",
+              background: tab === t && !forgotMode ? "var(--mine)" : "transparent",
+              color: tab === t && !forgotMode ? "var(--primary-foreground)" : "var(--muted-foreground)",
             }}
           >
             {t === "signup" ? "Sign up" : "Log in"}
@@ -74,34 +89,85 @@ function AuthPage() {
       </div>
 
       <form onSubmit={onSubmit} className="max-w-sm w-full mx-auto flex flex-col gap-3">
-        <input
-          type="email"
-          required
-          autoComplete="email"
-          placeholder="you@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="bg-card border border-border rounded-xl px-4 py-3.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
-        />
-        <input
-          type="password"
-          required
-          minLength={8}
-          autoComplete={tab === "signup" ? "new-password" : "current-password"}
-          placeholder="Password (min 8 chars)"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="bg-card border border-border rounded-xl px-4 py-3.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
-        />
-        {error && <p className="text-xs text-destructive">{error}</p>}
-        <button
-          type="submit"
-          disabled={busy}
-          className="rounded-2xl px-6 py-4 font-medium mt-2 disabled:opacity-50"
-          style={{ background: "var(--primary)", color: "var(--primary-foreground)" }}
-        >
-          {busy ? "…" : tab === "signup" ? "Continue" : "Log in"}
-        </button>
+        {forgotMode && resetSent ? (
+          <>
+            <p className="text-sm text-muted-foreground">Check your email for a reset link.</p>
+            <button
+              type="button"
+              onClick={() => {
+                setForgotMode(false);
+                setResetSent(false);
+                setError(null);
+              }}
+              className="text-sm text-primary underline-offset-4 hover:underline text-left"
+            >
+              Back to login
+            </button>
+          </>
+        ) : (
+          <>
+            <input
+              type="email"
+              required
+              autoComplete="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="bg-card border border-border rounded-xl px-4 py-3.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
+            />
+            {!forgotMode && (
+              <input
+                type="password"
+                required
+                minLength={8}
+                autoComplete={tab === "signup" ? "new-password" : "current-password"}
+                placeholder="Password (min 8 chars)"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="bg-card border border-border rounded-xl px-4 py-3.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
+              />
+            )}
+            {!forgotMode && tab === "login" && (
+              <button
+                type="button"
+                onClick={() => {
+                  setForgotMode(true);
+                  setError(null);
+                }}
+                className="text-sm text-primary underline-offset-4 hover:underline text-left"
+              >
+                Forgot password?
+              </button>
+            )}
+            {error && <p className="text-xs text-destructive">{error}</p>}
+            <button
+              type="submit"
+              disabled={busy}
+              className="rounded-2xl px-6 py-4 font-medium mt-2 disabled:opacity-50"
+              style={{ background: "var(--primary)", color: "var(--primary-foreground)" }}
+            >
+              {busy
+                ? "…"
+                : forgotMode
+                  ? "Send reset link"
+                  : tab === "signup"
+                    ? "Continue"
+                    : "Log in"}
+            </button>
+            {forgotMode && (
+              <button
+                type="button"
+                onClick={() => {
+                  setForgotMode(false);
+                  setError(null);
+                }}
+                className="text-sm text-primary underline-offset-4 hover:underline text-left"
+              >
+                Back to login
+              </button>
+            )}
+          </>
+        )}
       </form>
     </div>
   );
