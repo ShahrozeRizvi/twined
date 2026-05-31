@@ -396,7 +396,19 @@ function MapPage() {
   );
 }
 
+function fitToTrail(map: mapboxgl.Map, points: TrailPoint[], padding = 80) {
+  if (points.length === 0) return;
+  if (points.length === 1) {
+    map.easeTo({ center: [points[0].lng, points[0].lat], zoom: 16, duration: 600 });
+    return;
+  }
+  const bounds = new mapboxgl.LngLatBounds();
+  points.forEach((p) => bounds.extend([p.lng, p.lat]));
+  map.fitBounds(bounds, { padding, maxZoom: 16, minZoom: 2, duration: 600 });
+}
+
 function areFarApart(p1: TrailPoint, p2: TrailPoint): boolean {
+
   const R = 6371;
   const dLat = ((p2.lat - p1.lat) * Math.PI) / 180;
   const dLng = ((p2.lng - p1.lng) * Math.PI) / 180;
