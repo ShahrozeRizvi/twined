@@ -42,6 +42,7 @@ function MapPage() {
   const watchId = useRef<number | null>(null);
   const intervalId = useRef<ReturnType<typeof setInterval> | null>(null);
   const activeSession = useRef<TrailSession | null>(null);
+  const lastPoint = useRef<{ lat: number; lng: number } | null>(null);
 
   const [sharing, setSharing] = useState(false);
   const [points, setPoints] = useState<TrailPoint[]>([]);
@@ -249,23 +250,42 @@ function MapPage() {
     }
 
     const onPos = async (pos: GeolocationPosition) => {
+      const { latitude, longitude } = pos.coords;
+
+      // Skip if moved less than 20 meters from last recorded point
+      if (lastPoint.current) {
+        const dist = getDistance(
+          lastPoint.current.lat,
+          lastPoint.current.lng,
+          latitude,
+          longitude
+        );
+        if (dist < 20) return;
+      }
+
+      lastPoint.current = { lat: latitude, lng: longitude };
+
       const sess = activeSession.current;
       if (!sess || !profile.space_id) return;
       await supabase.from("trail_points").insert({
         space_id: profile.space_id,
         user_id: profile.id,
         session_id: sess.id,
-        lat: pos.coords.latitude,
-        lng: pos.coords.longitude,
+        lat: latitude,
+        lng: longitude,
       });
     };
     const onErr = (e: GeolocationPositionError) => setError(e.message);
 
     // capture one immediately
-    navigator.geolocation.getCurrentPosition(onPos, onErr, { enableHighAccuracy: true });
-    intervalId.current = setInterval(() => {
-      navigator.geolocation.getCurrentPosition(onPos, onErr, { enableHighAccuracy: true });
-    }, 300_000);
+    navigator.geolocation.getCurrentPosition(onPos, onErr, {
+      enableHighAccuracy: true,
+    });
+    watchId.current = navigator.geolocation.watchPosition(onPos, onErr, {
+      enableHighAccuracy: true,
+      maximumAge: 0,
+      timeout: 30000,
+    });
     setSharing(true);
   };
 
@@ -278,6 +298,7 @@ function MapPage() {
       navigator.geolocation.clearWatch(watchId.current);
       watchId.current = null;
     }
+    lastPoint.current = null;
     const sess = activeSession.current;
     if (sess) {
       await supabase
@@ -288,6 +309,24 @@ function MapPage() {
     }
     setSharing(false);
   };
+
+  function getDistance(
+    lat1: number,
+    lng1: number,
+    lat2: number,
+    lng2: number
+  ): number {
+    const R = 6371000;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLng = ((lng2 - lng1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
 
   return (
     <div className="relative w-full bg-card" style={{ height: 'calc(100dvh - 120px)' }}>
