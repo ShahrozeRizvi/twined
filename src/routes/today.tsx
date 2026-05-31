@@ -41,26 +41,15 @@ function TodayPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loaded, setLoaded] = useState(false);
 
-  const myDate = useMemo(
-    () => (profile ? localDateString(profile.timezone) : null),
-    [profile]
-  );
-  const partnerDate = useMemo(
-    () => (partner ? localDateString(partner.timezone) : null),
-    [partner]
-  );
-
-  // initial load: today's tasks for both
+  // initial load: all tasks for the space
   useEffect(() => {
-    if (!profile?.space_id || !myDate) return;
+    if (!profile?.space_id) return;
     let cancelled = false;
-    const dates = [myDate, partnerDate].filter(Boolean) as string[];
     (async () => {
       const { data } = await supabase
         .from("tasks")
         .select("*")
         .eq("space_id", profile.space_id!)
-        .in("task_date", dates)
         .order("position", { ascending: true });
       if (!cancelled) {
         setTasks((data as Task[]) || []);
@@ -70,7 +59,7 @@ function TodayPage() {
     return () => {
       cancelled = true;
     };
-  }, [profile?.space_id, myDate, partnerDate]);
+  }, [profile?.space_id]);
 
   // realtime
   useEffect(() => {
