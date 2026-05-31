@@ -3,6 +3,7 @@ import { formatLocalTime } from "@/lib/twined";
 import type { Profile } from "@/lib/use-twined";
 import { PixelAvatar } from "./PixelAvatar";
 import type { AvatarPreset } from "./PixelAvatar";
+import { Logo } from "@/components/Logo";
 
 interface TimezoneHeaderProps {
   me: Profile;
