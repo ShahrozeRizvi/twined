@@ -232,7 +232,16 @@ function MapPage() {
         partnerMarker.current.setLngLat([partnerLast.lng, partnerLast.lat]);
       }
     }
-  }, [points, profile, partner]);
+
+    // Show/hide markers based on active tab
+    if (activeTab === "mine") {
+      myMarker.current?.getElement().style.setProperty("display", "block");
+      partnerMarker.current?.getElement().style.setProperty("display", "none");
+    } else {
+      partnerMarker.current?.getElement().style.setProperty("display", "block");
+      myMarker.current?.getElement().style.setProperty("display", "none");
+    }
+  }, [points, profile, partner, activeTab]);
 
   // reposition + restyle when active tab changes
   useEffect(() => {
