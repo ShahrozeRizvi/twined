@@ -4,6 +4,7 @@ import { useTwined } from "@/lib/use-twined";
 import { TimezoneHeader } from "@/components/TimezoneHeader";
 import { BottomNav } from "@/components/BottomNav";
 import { PingListener } from "@/components/PingListener";
+import { FloatingHearts } from "@/components/FloatingHearts";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { user, profile, partner, loading } = useTwined();
