@@ -48,6 +48,7 @@ function MapPage() {
   const [points, setPoints] = useState<TrailPoint[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [mapReady, setMapReady] = useState(false);
+  const [activeTab, setActiveTab] = useState<"mine" | "partner">("mine");
 
   // init map
   useEffect(() => {
@@ -137,11 +138,6 @@ function MapPage() {
         .order("created_at", { ascending: true });
       if (!cancelled) {
         setPoints((data as TrailPoint[]) || []);
-        const myPoints = (data as TrailPoint[] | null)?.filter((p) => p.user_id === profile.id);
-        if (myPoints?.length && mapRef.current) {
-          fitToTrail(mapRef.current, myPoints);
-        }
-
       }
     })();
     return () => {
@@ -184,13 +180,25 @@ function MapPage() {
         (payload) => {
           const p = payload.new as TrailPoint;
           setPoints((prev) => [...prev, p]);
+          // refit if the new point belongs to the active tab's user
+          const map = mapRef.current;
+          if (!map) return;
+          const activeUserId =
+            activeTab === "mine" ? profile?.id : partner?.id;
+          if (p.user_id === activeUserId) {
+            setPoints((prev) => {
+              const userPoints = prev.filter((pt) => pt.user_id === activeUserId);
+              fitToTrail(map, userPoints);
+              return prev;
+            });
+          }
         }
       )
       .subscribe();
     return () => {
       supabase.removeChannel(ch);
     };
-  }, [profile?.space_id]);
+  }, [profile?.space_id, activeTab, profile?.id, partner?.id]);
 
   // update map markers + trails whenever points/profiles change
   useEffect(() => {
@@ -224,18 +232,40 @@ function MapPage() {
         partnerMarker.current.setLngLat([partnerLast.lng, partnerLast.lat]);
       }
     }
-
-    // smart zoom based on which trails are present
-    if (myPoints.length > 0 && partnerPoints.length > 0 &&
-        !areFarApart(myPoints[myPoints.length - 1], partnerPoints[partnerPoints.length - 1])) {
-      fitToTrail(map, [...myPoints, ...partnerPoints], 100);
-    } else if (myPoints.length > 0) {
-      fitToTrail(map, myPoints);
-    } else if (partnerPoints.length > 0) {
-      fitToTrail(map, partnerPoints);
-    }
-
   }, [points, profile, partner]);
+
+  // reposition + restyle when active tab changes
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady) return;
+
+    if (activeTab === "mine") {
+      const myPoints = points.filter((p) => p.user_id === profile?.id);
+      if (myPoints.length > 0) {
+        fitToTrail(map, myPoints);
+      } else if (profile) {
+        map.easeTo({ zoom: 14, duration: 600 });
+      }
+      map.setPaintProperty("trail-mine", "line-opacity", 0.85);
+      map.setPaintProperty("trail-mine", "line-width", 4);
+      map.setPaintProperty("trail-partner", "line-opacity", 0.25);
+      map.setPaintProperty("trail-partner", "line-width", 2);
+    } else {
+      const partnerPoints = partner
+        ? points.filter((p) => p.user_id === partner.id)
+        : [];
+      if (partnerPoints.length > 0) {
+        fitToTrail(map, partnerPoints);
+      } else {
+        map.easeTo({ zoom: 2, duration: 600 });
+      }
+      map.setPaintProperty("trail-partner", "line-opacity", 0.85);
+      map.setPaintProperty("trail-partner", "line-width", 4);
+      map.setPaintProperty("trail-mine", "line-opacity", 0.25);
+      map.setPaintProperty("trail-mine", "line-width", 2);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, mapReady]);
 
   const startWatching = async () => {
     if (!profile?.space_id || !profile?.id) return;
@@ -346,10 +376,36 @@ function MapPage() {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 
+  const partnerHasTrail = partner
+    ? points.some((p) => p.user_id === partner.id)
+    : false;
+
   return (
     <div className="relative w-full bg-card" style={{ height: 'calc(100dvh - 120px)' }}>
       <div ref={mapContainer} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%' }} />
 
+      {/* Tab switcher */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-card/90 backdrop-blur border border-border rounded-full p-1 flex gap-1">
+        <button
+          onClick={() => setActiveTab("mine")}
+          className={`rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${
+            activeTab === "mine" ? "text-white" : "text-muted-foreground"
+          }`}
+          style={activeTab === "mine" ? { background: "var(--mine)" } : undefined}
+        >
+          My Day
+        </button>
+        <button
+          onClick={() => partner && setActiveTab("partner")}
+          disabled={!partner}
+          className={`rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${
+            activeTab === "partner" ? "text-white" : "text-muted-foreground"
+          } ${!partner ? "opacity-40 cursor-not-allowed" : ""}`}
+          style={activeTab === "partner" ? { background: "var(--partner)" } : undefined}
+        >
+          {partner ? `${partner.name}'s Day` : "Their Day"}
+        </button>
+      </div>
 
       {!mapReady && !error && (
         <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-xs pointer-events-none">
@@ -358,40 +414,50 @@ function MapPage() {
       )}
 
       {error && (
-        <div className="absolute top-3 left-3 right-3 bg-destructive/90 text-destructive-foreground text-xs rounded-xl px-3 py-2 z-10">
+        <div className="absolute top-20 left-3 right-3 bg-destructive/90 text-destructive-foreground text-xs rounded-xl px-3 py-2 z-10">
           {error}
         </div>
       )}
 
+      {activeTab === "partner" && !partnerHasTrail && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+          <div className="bg-card/90 backdrop-blur rounded-2xl px-5 py-4 text-center">
+            <p className="text-sm text-muted-foreground">
+              {partner?.name || "Your person"} hasn't started their day yet
+            </p>
+          </div>
+        </div>
+      )}
 
-
-      <div
-        className="absolute left-4 right-4 bottom-4 bg-card/95 backdrop-blur border border-border rounded-2xl p-3 flex items-center gap-3"
-      >
-        {sharing ? (
-          <>
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-primary opacity-60 animate-ping" />
-              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-primary" />
-            </span>
-            <span className="text-sm flex-1">Sharing your day…</span>
+      {activeTab === "mine" && (
+        <div
+          className="absolute left-4 right-4 bottom-4 bg-card/95 backdrop-blur border border-border rounded-2xl p-3 flex items-center gap-3"
+        >
+          {sharing ? (
+            <>
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-primary opacity-60 animate-ping" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-primary" />
+              </span>
+              <span className="text-sm flex-1">Sharing your day…</span>
+              <button
+                onClick={stopSharing}
+                className="rounded-full px-3.5 py-1.5 text-xs font-medium border border-border flex items-center gap-1.5"
+              >
+                <Square size={12} fill="currentColor" /> Stop
+              </button>
+            </>
+          ) : (
             <button
-              onClick={stopSharing}
-              className="rounded-full px-3.5 py-1.5 text-xs font-medium border border-border flex items-center gap-1.5"
+              onClick={startWatching}
+              className="w-full rounded-xl px-4 py-2.5 font-medium text-sm flex items-center justify-center gap-2"
+              style={{ background: "var(--mine)", color: "var(--primary-foreground)" }}
             >
-              <Square size={12} fill="currentColor" /> Stop
+              <Play size={14} fill="currentColor" /> Start Sharing My Day
             </button>
-          </>
-        ) : (
-          <button
-            onClick={startWatching}
-            className="w-full rounded-xl px-4 py-2.5 font-medium text-sm flex items-center justify-center gap-2"
-            style={{ background: "var(--mine)", color: "var(--primary-foreground)" }}
-          >
-            <Play size={14} fill="currentColor" /> Start Sharing My Day
-          </button>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -405,21 +471,6 @@ function fitToTrail(map: mapboxgl.Map, points: TrailPoint[], padding = 80) {
   const bounds = new mapboxgl.LngLatBounds();
   points.forEach((p) => bounds.extend([p.lng, p.lat]));
   map.fitBounds(bounds, { padding, maxZoom: 16, minZoom: 2, duration: 600 });
-}
-
-function areFarApart(p1: TrailPoint, p2: TrailPoint): boolean {
-
-  const R = 6371;
-  const dLat = ((p2.lat - p1.lat) * Math.PI) / 180;
-  const dLng = ((p2.lng - p1.lng) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((p1.lat * Math.PI) / 180) *
-      Math.cos((p2.lat * Math.PI) / 180) *
-      Math.sin(dLng / 2) *
-      Math.sin(dLng / 2);
-  const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return dist > 500;
 }
 
 function emptyLine(): GeoJSON.FeatureCollection<GeoJSON.LineString> {
