@@ -237,7 +237,8 @@ export function BottomNav() {
     label: string,
     Icon: typeof CheckSquare,
     showBadge: boolean,
-    badgeValue: number
+    badgeValue: number,
+    showDot = false
   ) => {
     const active = pathname.startsWith(to);
     return (
@@ -265,9 +266,21 @@ export function BottomNav() {
               {badgeValue > 9 ? "9+" : badgeValue}
             </span>
           )}
+          {showDot && !showBadge && (
+            <span
+              className="absolute -top-1 -right-1 rounded-full animate-pulse"
+              style={{
+                width: 8,
+                height: 8,
+                backgroundColor: "var(--mine)",
+                boxShadow: "0 0 0 2px var(--card)",
+              }}
+            />
+          )}
         </span>
         <span className="text-[11px] font-medium tracking-wide">{label}</span>
       </Link>
+
     );
   };
 
