@@ -121,29 +121,6 @@
   }
 }
 
-/* Logo treatment — Four Seasons-inspired */
-.tw-logo {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  line-height: 1;
-  color: var(--cream);
-}
-.tw-logo .the {
-  font-family: var(--font-script);
-  font-size: 0.55em;
-  font-weight: 400;
-  letter-spacing: 0.02em;
-  margin-bottom: -0.15em;
-  opacity: 0.92;
-}
-.tw-logo .word {
-  font-family: var(--font-serif);
-  font-weight: 900;
-  letter-spacing: 0.28em;
-  padding-left: 0.28em; /* offset tracking */
-  font-size: 1em;
-}
 
 /* Pixel avatar idle bobbing */
 @keyframes pixel-bob {
