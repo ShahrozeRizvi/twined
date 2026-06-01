@@ -190,11 +190,17 @@ function TodayPage() {
   if (!profile) return null;
 
   const myTasks = tasks.filter(
-    (t) => t.user_id === profile.id && (t.category || DEFAULT_TAB) === activeTab
+    (t) =>
+      t.user_id === profile.id &&
+      ((t.category || DEFAULT_TAB) === activeTab ||
+        (activeTab === DEFAULT_TAB && t.category === "Today"))
   );
   const partnerTasks = partner
     ? tasks.filter(
-        (t) => t.user_id === partner.id && (t.category || DEFAULT_TAB) === activeTab
+        (t) =>
+          t.user_id === partner.id &&
+          ((t.category || DEFAULT_TAB) === activeTab ||
+            (activeTab === DEFAULT_TAB && t.category === "Today"))
       )
     : [];
 
@@ -204,6 +210,10 @@ function TodayPage() {
         lists={lists}
         activeTab={activeTab}
         onSelect={setActiveTab}
+        onListAdded={(l) => {
+          setLists((prev) => (prev.some((x) => x.id === l.id) ? prev : [...prev, l]));
+          setActiveTab(l.name);
+        }}
         spaceId={profile.space_id!}
         userId={profile.id}
       />
