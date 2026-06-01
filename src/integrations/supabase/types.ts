@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      lists: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+          position: number
+          space_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          name: string
+          position?: number
+          space_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          name?: string
+          position?: number
+          space_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lists_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       moments: {
         Row: {
           content: string | null
@@ -113,6 +148,7 @@ export type Database = {
       }
       tasks: {
         Row: {
+          category: string
           completed: boolean
           created_at: string
           id: string
@@ -123,6 +159,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          category?: string
           completed?: boolean
           created_at?: string
           id?: string
@@ -133,6 +170,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          category?: string
           completed?: boolean
           created_at?: string
           id?: string
