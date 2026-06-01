@@ -357,7 +357,6 @@ function TabPill({
   }, [mode]);
 
   const startPress = () => {
-    if (isDefault) return;
     longPressed.current = false;
     pressTimer.current = setTimeout(() => {
       longPressed.current = true;
