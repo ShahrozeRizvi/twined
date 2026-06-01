@@ -51,7 +51,7 @@ interface ListRow {
   created_at: string;
 }
 
-const DEFAULT_TAB = "Today";
+const DEFAULT_TAB = "General";
 
 function TodayPage() {
   const { profile, partner } = useTwined();
@@ -190,11 +190,17 @@ function TodayPage() {
   if (!profile) return null;
 
   const myTasks = tasks.filter(
-    (t) => t.user_id === profile.id && (t.category || DEFAULT_TAB) === activeTab
+    (t) =>
+      t.user_id === profile.id &&
+      ((t.category || DEFAULT_TAB) === activeTab ||
+        (activeTab === DEFAULT_TAB && t.category === "Today"))
   );
   const partnerTasks = partner
     ? tasks.filter(
-        (t) => t.user_id === partner.id && (t.category || DEFAULT_TAB) === activeTab
+        (t) =>
+          t.user_id === partner.id &&
+          ((t.category || DEFAULT_TAB) === activeTab ||
+            (activeTab === DEFAULT_TAB && t.category === "Today"))
       )
     : [];
 
@@ -204,6 +210,10 @@ function TodayPage() {
         lists={lists}
         activeTab={activeTab}
         onSelect={setActiveTab}
+        onListAdded={(l) => {
+          setLists((prev) => (prev.some((x) => x.id === l.id) ? prev : [...prev, l]));
+          setActiveTab(l.name);
+        }}
         spaceId={profile.space_id!}
         userId={profile.id}
       />
@@ -235,12 +245,14 @@ function TabBar({
   lists,
   activeTab,
   onSelect,
+  onListAdded,
   spaceId,
   userId,
 }: {
   lists: ListRow[];
   activeTab: string;
   onSelect: (name: string) => void;
+  onListAdded: (l: ListRow) => void;
   spaceId: string;
   userId: string;
 }) {
@@ -267,7 +279,7 @@ function TabBar({
       .single();
     setAdding(false);
     setNewName("");
-    if (data) onSelect((data as ListRow).name);
+    if (data) onListAdded(data as ListRow);
   };
 
   return (
@@ -277,9 +289,13 @@ function TabBar({
           key={l.id}
           list={l}
           active={l.name === activeTab}
+          canDelete={lists.length > 1}
           onSelect={() => onSelect(l.name)}
           onRenamed={(newName) => onSelect(newName)}
-          onDeleted={() => onSelect(DEFAULT_TAB)}
+          onDeleted={() => {
+            const next = lists.find((x) => x.id !== l.id);
+            onSelect(next?.name ?? DEFAULT_TAB);
+          }}
           spaceId={spaceId}
         />
       ))}
@@ -316,6 +332,7 @@ function TabBar({
 function TabPill({
   list,
   active,
+  canDelete,
   onSelect,
   onRenamed,
   onDeleted,
@@ -323,24 +340,23 @@ function TabPill({
 }: {
   list: ListRow;
   active: boolean;
+  canDelete: boolean;
   onSelect: () => void;
   onRenamed: (newName: string) => void;
   onDeleted: () => void;
   spaceId: string;
 }) {
-  const [mode, setMode] = useState<"view" | "menu" | "rename" | "confirmDelete">("view");
+  const [mode, setMode] = useState<"view" | "menu" | "rename" | "confirmDelete" | "blockedDelete">("view");
   const [editName, setEditName] = useState(list.name);
   const editRef = useRef<HTMLInputElement>(null);
   const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressed = useRef(false);
-  const isDefault = list.name === DEFAULT_TAB;
 
   useEffect(() => {
     if (mode === "rename") editRef.current?.focus();
   }, [mode]);
 
   const startPress = () => {
-    if (isDefault) return;
     longPressed.current = false;
     pressTimer.current = setTimeout(() => {
       longPressed.current = true;
@@ -409,11 +425,27 @@ function TabPill({
           Rename
         </button>
         <button
-          onClick={() => setMode("confirmDelete")}
+          onClick={() => setMode(canDelete ? "confirmDelete" : "blockedDelete")}
           className="px-2.5 py-1 rounded-full text-xs bg-card border border-border text-destructive"
         >
           Delete
         </button>
+        <button
+          onClick={() => setMode("view")}
+          className="px-2 py-1 rounded-full text-xs text-muted-foreground"
+        >
+          ✕
+        </button>
+      </div>
+    );
+  }
+
+  if (mode === "blockedDelete") {
+    return (
+      <div className="flex gap-1 flex-shrink-0 items-center">
+        <span className="px-2.5 py-1 rounded-full text-xs bg-card border border-border text-muted-foreground">
+          You need at least one list.
+        </span>
         <button
           onClick={() => setMode("view")}
           className="px-2 py-1 rounded-full text-xs text-muted-foreground"
@@ -459,10 +491,8 @@ function TabPill({
       onTouchStart={startPress}
       onTouchEnd={endPress}
       onContextMenu={(e) => {
-        if (!isDefault) {
-          e.preventDefault();
-          setMode("menu");
-        }
+        e.preventDefault();
+        setMode("menu");
       }}
       className="px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 transition-colors"
       style={
