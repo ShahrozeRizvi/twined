@@ -21,6 +21,11 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
+// supabase client cast to allow access to lists table + category column
+// (types.ts is auto-generated and may not include them yet)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const sb = supabase as any;
+
 export const Route = createFileRoute("/today")({
   component: () => <AppShell><TodayPage /></AppShell>,
 });
@@ -34,12 +39,96 @@ interface Task {
   position: number;
   task_date: string;
   created_at: string;
+  category: string;
 }
+
+interface ListRow {
+  id: string;
+  space_id: string;
+  name: string;
+  position: number;
+  created_by: string;
+  created_at: string;
+}
+
+const DEFAULT_TAB = "Today";
 
 function TodayPage() {
   const { profile, partner } = useTwined();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [lists, setLists] = useState<ListRow[]>([]);
+  const [activeTab, setActiveTab] = useState<string>(DEFAULT_TAB);
+
+  // load lists, ensure default "Today" exists
+  useEffect(() => {
+    if (!profile?.space_id) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await sb
+        .from("lists")
+        .select("*")
+        .eq("space_id", profile.space_id!)
+        .order("position", { ascending: true });
+      if (cancelled) return;
+      let rows = (data as ListRow[]) || [];
+      if (!rows.some((l) => l.name === DEFAULT_TAB)) {
+        const { data: inserted } = await sb
+          .from("lists")
+          .insert({
+            space_id: profile.space_id,
+            name: DEFAULT_TAB,
+            position: 0,
+            created_by: profile.id,
+          })
+          .select()
+          .single();
+        if (inserted) rows = [inserted as ListRow, ...rows];
+      }
+      setLists(rows);
+      setActiveTab((cur) => (rows.some((l) => l.name === cur) ? cur : rows[0]?.name || DEFAULT_TAB));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [profile?.space_id, profile?.id]);
+
+  // realtime: lists
+  useEffect(() => {
+    if (!profile?.space_id) return;
+    const ch = supabase
+      .channel(`lists:${profile.space_id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "lists",
+          filter: `space_id=eq.${profile.space_id}`,
+        },
+        (payload) => {
+          setLists((prev) => {
+            if (payload.eventType === "INSERT") {
+              const l = payload.new as ListRow;
+              if (prev.some((x) => x.id === l.id)) return prev;
+              return [...prev, l].sort((a, b) => a.position - b.position);
+            }
+            if (payload.eventType === "UPDATE") {
+              const l = payload.new as ListRow;
+              return prev.map((x) => (x.id === l.id ? l : x));
+            }
+            if (payload.eventType === "DELETE") {
+              return prev.filter((x) => x.id !== (payload.old as ListRow).id);
+            }
+            return prev;
+          });
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [profile?.space_id]);
 
   // initial load: all tasks for the space
   useEffect(() => {
@@ -61,7 +150,7 @@ function TodayPage() {
     };
   }, [profile?.space_id]);
 
-  // realtime
+  // realtime: tasks
   useEffect(() => {
     if (!profile?.space_id) return;
     const ch = supabase
@@ -100,14 +189,25 @@ function TodayPage() {
 
   if (!profile) return null;
 
-  const myTasks = tasks.filter((t) => t.user_id === profile.id);
+  const myTasks = tasks.filter(
+    (t) => t.user_id === profile.id && (t.category || DEFAULT_TAB) === activeTab
+  );
   const partnerTasks = partner
-    ? tasks.filter((t) => t.user_id === partner.id)
+    ? tasks.filter(
+        (t) => t.user_id === partner.id && (t.category || DEFAULT_TAB) === activeTab
+      )
     : [];
 
   return (
     <div className="flex flex-col min-h-full">
-      <div className="grid grid-cols-2 gap-2 p-3 pt-4 flex-1">
+      <TabBar
+        lists={lists}
+        activeTab={activeTab}
+        onSelect={setActiveTab}
+        spaceId={profile.space_id!}
+        userId={profile.id}
+      />
+      <div className="grid grid-cols-2 gap-2 p-3 pt-2 flex-1">
         <TaskColumn
           title={profile.name || "You"}
           accent="mine"
@@ -115,6 +215,7 @@ function TodayPage() {
           tasks={myTasks}
           canEdit
           loaded={loaded}
+          activeCategory={activeTab}
         />
         <TaskColumn
           title={partner?.name || "Them"}
@@ -123,9 +224,259 @@ function TodayPage() {
           tasks={partnerTasks}
           canEdit={false}
           loaded={loaded}
+          activeCategory={activeTab}
         />
       </div>
     </div>
+  );
+}
+
+function TabBar({
+  lists,
+  activeTab,
+  onSelect,
+  spaceId,
+  userId,
+}: {
+  lists: ListRow[];
+  activeTab: string;
+  onSelect: (name: string) => void;
+  spaceId: string;
+  userId: string;
+}) {
+  const [adding, setAdding] = useState(false);
+  const [newName, setNewName] = useState("");
+  const addRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (adding) addRef.current?.focus();
+  }, [adding]);
+
+  const commitAdd = async () => {
+    const name = newName.trim();
+    if (!name) {
+      setAdding(false);
+      setNewName("");
+      return;
+    }
+    const pos = lists.length;
+    const { data } = await sb
+      .from("lists")
+      .insert({ space_id: spaceId, name, position: pos, created_by: userId })
+      .select()
+      .single();
+    setAdding(false);
+    setNewName("");
+    if (data) onSelect((data as ListRow).name);
+  };
+
+  return (
+    <div className="flex gap-1.5 overflow-x-auto px-3 py-2 no-scrollbar">
+      {lists.map((l) => (
+        <TabPill
+          key={l.id}
+          list={l}
+          active={l.name === activeTab}
+          onSelect={() => onSelect(l.name)}
+          onRenamed={(newName) => onSelect(newName)}
+          onDeleted={() => onSelect(DEFAULT_TAB)}
+          spaceId={spaceId}
+        />
+      ))}
+      {adding ? (
+        <input
+          ref={addRef}
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+          onBlur={commitAdd}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") commitAdd();
+            if (e.key === "Escape") {
+              setAdding(false);
+              setNewName("");
+            }
+          }}
+          placeholder="List name"
+          maxLength={40}
+          className="px-3 py-1 rounded-full text-xs bg-card border border-border focus:outline-none focus:border-foreground min-w-[100px]"
+        />
+      ) : (
+        <button
+          onClick={() => setAdding(true)}
+          className="px-2.5 py-1 rounded-full text-xs border border-border text-muted-foreground hover:text-foreground flex items-center gap-1 flex-shrink-0"
+          aria-label="Add list"
+        >
+          <Plus size={12} strokeWidth={2.6} />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function TabPill({
+  list,
+  active,
+  onSelect,
+  onRenamed,
+  onDeleted,
+  spaceId,
+}: {
+  list: ListRow;
+  active: boolean;
+  onSelect: () => void;
+  onRenamed: (newName: string) => void;
+  onDeleted: () => void;
+  spaceId: string;
+}) {
+  const [mode, setMode] = useState<"view" | "menu" | "rename" | "confirmDelete">("view");
+  const [editName, setEditName] = useState(list.name);
+  const editRef = useRef<HTMLInputElement>(null);
+  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressed = useRef(false);
+  const isDefault = list.name === DEFAULT_TAB;
+
+  useEffect(() => {
+    if (mode === "rename") editRef.current?.focus();
+  }, [mode]);
+
+  const startPress = () => {
+    if (isDefault) return;
+    longPressed.current = false;
+    pressTimer.current = setTimeout(() => {
+      longPressed.current = true;
+      setMode("menu");
+    }, 500);
+  };
+  const endPress = () => {
+    if (pressTimer.current) clearTimeout(pressTimer.current);
+  };
+
+  const commitRename = async () => {
+    const name = editName.trim();
+    if (!name || name === list.name) {
+      setMode("view");
+      setEditName(list.name);
+      return;
+    }
+    await sb.from("lists").update({ name }).eq("id", list.id);
+    await sb
+      .from("tasks")
+      .update({ category: name })
+      .eq("space_id", spaceId)
+      .eq("category", list.name);
+    setMode("view");
+    onRenamed(name);
+  };
+
+  const doDelete = async () => {
+    await sb
+      .from("tasks")
+      .update({ category: DEFAULT_TAB })
+      .eq("space_id", spaceId)
+      .eq("category", list.name);
+    await sb.from("lists").delete().eq("id", list.id);
+    setMode("view");
+    onDeleted();
+  };
+
+  if (mode === "rename") {
+    return (
+      <input
+        ref={editRef}
+        value={editName}
+        onChange={(e) => setEditName(e.target.value)}
+        onBlur={commitRename}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") commitRename();
+          if (e.key === "Escape") {
+            setMode("view");
+            setEditName(list.name);
+          }
+        }}
+        maxLength={40}
+        className="px-3 py-1 rounded-full text-xs bg-card border border-foreground focus:outline-none min-w-[100px]"
+      />
+    );
+  }
+
+  if (mode === "menu") {
+    return (
+      <div className="flex gap-1 flex-shrink-0">
+        <button
+          onClick={() => setMode("rename")}
+          className="px-2.5 py-1 rounded-full text-xs bg-card border border-border"
+        >
+          Rename
+        </button>
+        <button
+          onClick={() => setMode("confirmDelete")}
+          className="px-2.5 py-1 rounded-full text-xs bg-card border border-border text-destructive"
+        >
+          Delete
+        </button>
+        <button
+          onClick={() => setMode("view")}
+          className="px-2 py-1 rounded-full text-xs text-muted-foreground"
+        >
+          ✕
+        </button>
+      </div>
+    );
+  }
+
+  if (mode === "confirmDelete") {
+    return (
+      <div className="flex gap-1 flex-shrink-0">
+        <button
+          onClick={doDelete}
+          className="px-2.5 py-1 rounded-full text-xs text-white"
+          style={{ background: "#EF4444" }}
+        >
+          Confirm delete
+        </button>
+        <button
+          onClick={() => setMode("view")}
+          className="px-2.5 py-1 rounded-full text-xs bg-card border border-border"
+        >
+          Cancel
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => {
+        if (longPressed.current) {
+          longPressed.current = false;
+          return;
+        }
+        onSelect();
+      }}
+      onMouseDown={startPress}
+      onMouseUp={endPress}
+      onMouseLeave={endPress}
+      onTouchStart={startPress}
+      onTouchEnd={endPress}
+      onContextMenu={(e) => {
+        if (!isDefault) {
+          e.preventDefault();
+          setMode("menu");
+        }
+      }}
+      className="px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 transition-colors"
+      style={
+        active
+          ? { background: "var(--mine)", color: "#ffffff", border: "1px solid transparent" }
+          : {
+              background: "transparent",
+              color: "var(--muted-foreground)",
+              border: "1px solid var(--border)",
+            }
+      }
+    >
+      {list.name}
+    </button>
   );
 }
 
@@ -136,6 +487,7 @@ function TaskColumn({
   tasks,
   canEdit,
   loaded,
+  activeCategory,
 }: {
   title: string;
   accent: "mine" | "partner";
@@ -143,6 +495,7 @@ function TaskColumn({
   tasks: Task[];
   canEdit: boolean;
   loaded: boolean;
+  activeCategory: string;
 }) {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -153,7 +506,6 @@ function TaskColumn({
 
   const toggle = async (t: Task) => {
     if (!canEdit) return;
-    // optimistic
     await supabase.from("tasks").update({ completed: !t.completed }).eq("id", t.id);
   };
 
@@ -162,11 +514,12 @@ function TaskColumn({
     setBusy(true);
     try {
       const nextPos = (tasks[tasks.length - 1]?.position ?? -1) + 1;
-      await supabase.from("tasks").insert({
+      await sb.from("tasks").insert({
         space_id: profile.space_id,
         user_id: profile.id,
         text: text.trim(),
         position: nextPos,
+        category: activeCategory,
       });
       setText("");
       inputRef.current?.focus();
