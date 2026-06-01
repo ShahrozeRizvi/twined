@@ -332,6 +332,7 @@ function TabBar({
 function TabPill({
   list,
   active,
+  canDelete,
   onSelect,
   onRenamed,
   onDeleted,
@@ -339,17 +340,17 @@ function TabPill({
 }: {
   list: ListRow;
   active: boolean;
+  canDelete: boolean;
   onSelect: () => void;
   onRenamed: (newName: string) => void;
   onDeleted: () => void;
   spaceId: string;
 }) {
-  const [mode, setMode] = useState<"view" | "menu" | "rename" | "confirmDelete">("view");
+  const [mode, setMode] = useState<"view" | "menu" | "rename" | "confirmDelete" | "blockedDelete">("view");
   const [editName, setEditName] = useState(list.name);
   const editRef = useRef<HTMLInputElement>(null);
   const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressed = useRef(false);
-  const isDefault = list.name === DEFAULT_TAB;
 
   useEffect(() => {
     if (mode === "rename") editRef.current?.focus();
