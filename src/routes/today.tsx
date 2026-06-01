@@ -475,10 +475,8 @@ function TabPill({
       onTouchStart={startPress}
       onTouchEnd={endPress}
       onContextMenu={(e) => {
-        if (!isDefault) {
-          e.preventDefault();
-          setMode("menu");
-        }
+        e.preventDefault();
+        setMode("menu");
       }}
       className="px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 transition-colors"
       style={
