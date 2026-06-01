@@ -51,7 +51,7 @@ interface ListRow {
   created_at: string;
 }
 
-const DEFAULT_TAB = "Today";
+const DEFAULT_TAB = "General";
 
 function TodayPage() {
   const { profile, partner } = useTwined();
