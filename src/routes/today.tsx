@@ -425,11 +425,27 @@ function TabPill({
           Rename
         </button>
         <button
-          onClick={() => setMode("confirmDelete")}
+          onClick={() => setMode(canDelete ? "confirmDelete" : "blockedDelete")}
           className="px-2.5 py-1 rounded-full text-xs bg-card border border-border text-destructive"
         >
           Delete
         </button>
+        <button
+          onClick={() => setMode("view")}
+          className="px-2 py-1 rounded-full text-xs text-muted-foreground"
+        >
+          ✕
+        </button>
+      </div>
+    );
+  }
+
+  if (mode === "blockedDelete") {
+    return (
+      <div className="flex gap-1 flex-shrink-0 items-center">
+        <span className="px-2.5 py-1 rounded-full text-xs bg-card border border-border text-muted-foreground">
+          You need at least one list.
+        </span>
         <button
           onClick={() => setMode("view")}
           className="px-2 py-1 rounded-full text-xs text-muted-foreground"
