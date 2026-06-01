@@ -245,12 +245,14 @@ function TabBar({
   lists,
   activeTab,
   onSelect,
+  onListAdded,
   spaceId,
   userId,
 }: {
   lists: ListRow[];
   activeTab: string;
   onSelect: (name: string) => void;
+  onListAdded: (l: ListRow) => void;
   spaceId: string;
   userId: string;
 }) {
@@ -277,7 +279,7 @@ function TabBar({
       .single();
     setAdding(false);
     setNewName("");
-    if (data) onSelect((data as ListRow).name);
+    if (data) onListAdded(data as ListRow);
   };
 
   return (
@@ -287,9 +289,13 @@ function TabBar({
           key={l.id}
           list={l}
           active={l.name === activeTab}
+          canDelete={lists.length > 1}
           onSelect={() => onSelect(l.name)}
           onRenamed={(newName) => onSelect(newName)}
-          onDeleted={() => onSelect(DEFAULT_TAB)}
+          onDeleted={() => {
+            const next = lists.find((x) => x.id !== l.id);
+            onSelect(next?.name ?? DEFAULT_TAB);
+          }}
           spaceId={spaceId}
         />
       ))}
