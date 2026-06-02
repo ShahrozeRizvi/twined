@@ -1,5 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
-  <rect width="192" height="192" fill="#0F0F14"/>
-  <text x="96" y="78" text-anchor="middle" fill="#F4EFE4" font-family="Georgia, serif" font-style="italic" font-size="28">the</text>
-  <text x="96" y="128" text-anchor="middle" fill="#F4EFE4" font-family="Georgia, serif" font-weight="900" font-size="36" letter-spacing="6">TWINED</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Pinyon+Script&amp;display=swap');
+    </style>
+  </defs>
+  <rect width="512" height="512" fill="#FAF8F3"/>
+  <text x="256" y="256" text-anchor="middle" dominant-baseline="middle" dy="20" fill="#9B7FE8" font-family="'Pinyon Script', cursive" font-size="276">Twined</text>
 </svg>
