@@ -149,7 +149,7 @@ function MomentsPage() {
     return () => {
       supabase.removeChannel(ch);
     };
-  }, [profile?.space_id]);
+  }, [profile?.space_id, todayStart, todayEnd]);
 
   // (Partner ping notifications are handled globally by PingListener in AppShell)
 
