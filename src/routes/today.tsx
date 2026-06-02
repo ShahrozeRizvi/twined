@@ -225,15 +225,29 @@ function TodayPage() {
     : 0;
 
   const doDelete = async (list: ListRow) => {
+    const listName = list.name;
+
+    // Step 1: Optimistically remove list from local state
+    setLists((prev) => prev.filter((l) => l.id !== list.id));
+
+    // Step 2: Optimistically remove tasks from local state
+    setTasks((prev) => prev.filter((t) => t.category !== listName));
+
+    // Step 3: Switch active tab to the first remaining list
+    setActiveTab(lists.find((l) => l.id !== list.id)?.name ?? DEFAULT_TAB);
+
+    // Step 4: Close the confirmation dialog immediately
+    setConfirmList(null);
+
+    // Step 5: Delete tasks from Supabase first
     await sb
       .from("tasks")
-      .update({ category: DEFAULT_TAB })
-      .eq("space_id", profile.space_id!)
-      .eq("category", list.name);
+      .delete()
+      .eq("space_id", profile!.space_id!)
+      .eq("category", listName);
+
+    // Step 6: Delete the list from Supabase
     await sb.from("lists").delete().eq("id", list.id);
-    setLists((prev) => prev.filter((x) => x.id !== list.id));
-    setConfirmList(null);
-    setActiveTab(DEFAULT_TAB);
   };
 
   const saveRename = async (list: ListRow, newName: string) => {
