@@ -148,19 +148,23 @@ function PersonCell({
         </div>
         {count > 0 && (
           <div
-            className="absolute -top-1 -right-1 flex items-center justify-center rounded-full text-white font-bold border-2 border-background"
-            style={{
-              background: "#EF4444",
-              minWidth: 18,
-              height: 18,
-              fontSize: 10,
-              paddingLeft: count > 9 ? 3 : 0,
-              paddingRight: count > 9 ? 3 : 0,
-              lineHeight: "14px",
-              zIndex: 10,
-            }}
+            className="absolute -top-2 -right-2 flex items-center justify-center"
+            style={{ zIndex: 10 }}
           >
-            {count > 99 ? "99+" : count}
+            <div className="relative flex items-center justify-center">
+              <span style={{ fontSize: 22, lineHeight: 1 }}>🤍</span>
+              <span
+                className="absolute font-bold text-white"
+                style={{
+                  fontSize: 9,
+                  lineHeight: 1,
+                  marginTop: 1,
+                  textShadow: "0 0 2px rgba(0,0,0,0.4)",
+                }}
+              >
+                {count > 99 ? "99+" : count}
+              </span>
+            </div>
           </div>
         )}
       </div>
