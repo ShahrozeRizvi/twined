@@ -63,12 +63,17 @@ interface ListRow {
 
 const DEFAULT_TAB = "General";
 
+type MenuTarget = { list: ListRow; x: number; y: number };
+
 function TodayPage() {
   const { profile, partner } = useTwined();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [lists, setLists] = useState<ListRow[]>([]);
   const [activeTab, setActiveTab] = useState<string>(DEFAULT_TAB);
+  const [menuTarget, setMenuTarget] = useState<MenuTarget | null>(null);
+  const [renamingListId, setRenamingListId] = useState<string | null>(null);
+  const [confirmList, setConfirmList] = useState<ListRow | null>(null);
 
   // load lists, ensure default "Today" exists
   useEffect(() => {
@@ -214,6 +219,23 @@ function TodayPage() {
       )
     : [];
 
+  const canDeleteMenu = lists.length > 1;
+  const popupLeft = menuTarget
+    ? Math.min(menuTarget.x, window.innerWidth - 170)
+    : 0;
+
+  const doDelete = async (list: ListRow) => {
+    await sb
+      .from("tasks")
+      .update({ category: DEFAULT_TAB })
+      .eq("space_id", profile.space_id!)
+      .eq("category", list.name);
+    await sb.from("lists").delete().eq("id", list.id);
+    setLists((prev) => prev.filter((x) => x.id !== list.id));
+    setConfirmList(null);
+    setActiveTab(DEFAULT_TAB);
+  };
+
   return (
     <div className="flex flex-col min-h-full">
       <TabBar
@@ -224,6 +246,11 @@ function TodayPage() {
           setLists((prev) => (prev.some((x) => x.id === l.id) ? prev : [...prev, l]));
           setActiveTab(l.name);
         }}
+        renamingListId={renamingListId}
+        onRenameDone={() => setRenamingListId(null)}
+        onOpenMenu={(list, rect) =>
+          setMenuTarget({ list, x: rect.left, y: rect.bottom + 8 })
+        }
         spaceId={profile.space_id!}
         userId={profile.id}
       />
@@ -249,6 +276,71 @@ function TodayPage() {
           onLocalRemove={(id) => setTasks((prev) => prev.filter((x) => x.id !== id))}
         />
       </div>
+
+      {menuTarget && (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setMenuTarget(null)}
+            onTouchStart={() => setMenuTarget(null)}
+          />
+          <div
+            className="fixed z-50 bg-card border border-border rounded-xl shadow-xl overflow-hidden"
+            style={{ top: menuTarget.y, left: popupLeft, minWidth: 160 }}
+          >
+            <button
+              onClick={() => {
+                setRenamingListId(menuTarget.list.id);
+                setMenuTarget(null);
+              }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-muted text-left"
+            >
+              <Pencil size={13} />
+              <span>Rename</span>
+            </button>
+            {canDeleteMenu ? (
+              <button
+                onClick={() => {
+                  setConfirmList(menuTarget.list);
+                  setMenuTarget(null);
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-muted text-left text-destructive"
+              >
+                <Trash2 size={13} />
+                <span>Delete</span>
+              </button>
+            ) : (
+              <div
+                title="You need at least one list"
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground opacity-50 cursor-not-allowed"
+              >
+                <Trash2 size={13} />
+                <span>Delete</span>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      <AlertDialog open={!!confirmList} onOpenChange={(o) => !o && setConfirmList(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {confirmList?.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              All tasks in this list will be moved to General. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => confirmList && doDelete(confirmList)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
