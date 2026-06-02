@@ -36,6 +36,10 @@ import { CSS } from "@dnd-kit/utilities";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = supabase as any;
 
+// Shared across parent (realtime) and child (drag list) so realtime UPDATE
+// events don't clobber the optimistic order while a drag is settling.
+const isDraggingRef = { current: false };
+
 export const Route = createFileRoute("/today")({
   component: () => <AppShell><TodayPage /></AppShell>,
 });
