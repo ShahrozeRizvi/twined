@@ -36,6 +36,10 @@ import { CSS } from "@dnd-kit/utilities";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = supabase as any;
 
+// Shared across parent (realtime) and child (drag list) so realtime UPDATE
+// events don't clobber the optimistic order while a drag is settling.
+const isDraggingRef = { current: false };
+
 export const Route = createFileRoute("/today")({
   component: () => <AppShell><TodayPage /></AppShell>,
 });
@@ -204,6 +208,9 @@ function TodayPage() {
               return [...prev, t].sort((a, b) => a.position - b.position);
             }
             if (payload.eventType === "UPDATE") {
+              // Skip updates while a drag is settling to prevent
+              // out-of-order position events from reverting state.
+              if (isDraggingRef.current) return prev;
               const t = payload.new as Task;
               return prev.map((x) => (x.id === t.id ? t : x));
             }
@@ -733,21 +740,41 @@ function TaskList({
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
 
-  const handleDragEnd = async (event: DragEndEvent) => {
+  const handleDragStart = () => {
+    isDraggingRef.current = true;
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    isDraggingRef.current = false;
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     const oldIndex = localTasks.findIndex((t) => t.id === active.id);
     const newIndex = localTasks.findIndex((t) => t.id === over.id);
     if (oldIndex === -1 || newIndex === -1) return;
+
     const reordered = arrayMove(localTasks, oldIndex, newIndex);
     setLocalTasks(reordered);
-    await Promise.all(
-      reordered.map((t, i) =>
-        t.position === i
-          ? Promise.resolve()
-          : supabase.from("tasks").update({ position: i }).eq("id", t.id)
+
+    // Only update tasks whose index actually changed
+    const updates = reordered
+      .map((t, index) => ({ id: t.id, position: index }))
+      .filter((item, index) => localTasks[index]?.id !== item.id);
+
+    const spaceId = reordered[0]?.space_id;
+
+    Promise.all(
+      updates.map(({ id, position }) =>
+        supabase.from("tasks").update({ position }).eq("id", id)
       )
-    );
+    ).then(async () => {
+      if (!spaceId) return;
+      const { data } = await supabase
+        .from("tasks")
+        .select("*")
+        .eq("space_id", spaceId)
+        .order("position", { ascending: true });
+      if (data) setLocalTasks(data as Task[]);
+    });
   };
 
   const emptyState = loaded && localTasks.length === 0 && (
@@ -778,7 +805,7 @@ function TaskList({
   }
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <SortableContext items={localTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
         <ul className="flex-1 px-2 pb-2 space-y-1 overflow-y-auto min-h-[200px]">
           {emptyState}
