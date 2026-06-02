@@ -428,13 +428,9 @@ function TabBar({
           active={l.name === activeTab}
           renaming={renamingListId === l.id}
           onSelect={() => onSelect(l.name)}
-          onRenamed={(newName) => {
-            onRenameDone();
-            onSelect(newName);
-          }}
+          onRename={(newName) => onRename(l, newName)}
           onRenameCancel={onRenameDone}
           onOpenMenu={(rect) => onOpenMenu(l, rect)}
-          spaceId={spaceId}
         />
       ))}
       {adding ? (
