@@ -11,6 +11,36 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { user, profile, partner, loading } = useTwined();
   const navigate = useNavigate();
   const [connected, setConnected] = useState(true);
+  const lastActiveAt = useRef<number>(Date.now());
+
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === "hidden") {
+        lastActiveAt.current = Date.now();
+        return;
+      }
+
+      const awayMs = Date.now() - lastActiveAt.current;
+
+      if (awayMs > 30_000) {
+        setConnected(false);
+
+        try {
+          await supabase.removeAllChannels();
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          window.dispatchEvent(new CustomEvent("twined:reconnect"));
+          setConnected(true);
+        } catch {
+          setConnected(false);
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
 
   useEffect(() => {
     const channel = supabase.channel("connection-monitor");
