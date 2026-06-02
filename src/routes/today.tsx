@@ -365,7 +365,7 @@ function TodayPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete {confirmList?.name}?</AlertDialogTitle>
             <AlertDialogDescription>
-              All tasks in this list will be moved to General. This cannot be undone.
+              All tasks in this list will be permanently deleted. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
