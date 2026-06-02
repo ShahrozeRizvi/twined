@@ -148,23 +148,35 @@ function PersonCell({
         </div>
         {count > 0 && (
           <div
-            className="absolute -top-2 -right-2 flex items-center justify-center"
-            style={{ zIndex: 10 }}
+            className="absolute flex items-center justify-center"
+            style={{ 
+              top: -6, 
+              right: -6,
+              zIndex: 10 
+            }}
           >
-            <div className="relative flex items-center justify-center">
-              <span style={{ fontSize: 22, lineHeight: 1 }}>🤍</span>
-              <span
-                className="absolute font-bold text-white"
-                style={{
-                  fontSize: 9,
-                  lineHeight: 1,
-                  marginTop: 1,
-                  textShadow: "0 0 2px rgba(0,0,0,0.4)",
-                }}
+            <svg 
+              width="26" 
+              height="24" 
+              viewBox="0 0 26 24" 
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path 
+                d="M13 21.5C13 21.5 2 14.5 2 7.5C2 4.5 4.5 2 7.5 2C9.5 2 11.2 3 13 5C14.8 3 16.5 2 18.5 2C21.5 2 24 4.5 24 7.5C24 14.5 13 21.5 13 21.5Z" 
+                fill="#EF4444"
+              />
+              <text
+                x="13"
+                y="14"
+                textAnchor="middle"
+                fill="white"
+                fontFamily="system-ui, sans-serif"
+                fontWeight="700"
+                fontSize={count > 9 ? "8" : "9"}
               >
                 {count > 99 ? "99+" : count}
-              </span>
-            </div>
+              </text>
+            </svg>
           </div>
         )}
       </div>
