@@ -318,25 +318,25 @@ function TodayPage() {
         spaceId={profile.space_id!}
         userId={profile.id}
       />
-      <div className="flex items-end px-3 gap-1 mt-1">
-        {/* Me tab — left, always me */}
+      <div className="relative mx-3 mt-1 flex-1 flex flex-col mb-3">
+        {/* Me tab — bottom-left of card top edge */}
         <button
           onClick={() => setActiveUser("me")}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-t-xl rounded-b-none transition-none border-t border-l border-r border-b-0"
+          className="absolute flex items-center gap-1.5 px-3 py-1.5 rounded-t-xl"
           style={{
-            background: activeUser === "me"
-              ? "var(--card)"
-              : "var(--muted)",
-            borderColor: activeUser === "me"
-              ? "var(--border)"
-              : "transparent",
-            borderTopWidth: activeUser === "me" ? 2 : 1,
-            borderTopColor: activeUser === "me"
-              ? "var(--mine)"
-              : "transparent",
-            marginBottom: activeUser === "me" ? -1 : 0,
-            zIndex: activeUser === "me" ? 2 : 1,
-            position: "relative",
+            left: 0,
+            bottom: "100%",
+            marginBottom: 0,
+            background: activeUser === "me" ? "var(--card)" : "var(--muted)",
+            border: "1px solid var(--border)",
+            borderBottom:
+              activeUser === "me"
+                ? "1px solid var(--card)"
+                : "1px solid var(--border)",
+            borderTop: `2px solid ${
+              activeUser === "me" ? "var(--mine)" : "var(--border)"
+            }`,
+            zIndex: activeUser === "me" ? 3 : 1,
           }}
         >
           <PixelAvatar
@@ -347,94 +347,100 @@ function TodayPage() {
           <span
             className="text-xs font-medium whitespace-nowrap"
             style={{
-              color: activeUser === "me"
-                ? "var(--mine)"
-                : "var(--muted-foreground)",
+              color:
+                activeUser === "me"
+                  ? "var(--mine)"
+                  : "var(--muted-foreground)",
             }}
           >
             {profile.name || "Me"}
           </span>
         </button>
-        {/* Partner tab — right, always partner */}
+        {/* Partner tab — bottom-right of card top edge */}
         <button
           onClick={() => setActiveUser("partner")}
           disabled={!partner}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-t-xl rounded-b-none transition-none border-t border-l border-r border-b-0"
+          className="absolute flex items-center gap-1.5 px-3 py-1.5 rounded-t-xl"
           style={{
-            background: activeUser === "partner"
-              ? "var(--card)"
-              : "var(--muted)",
-            borderColor: activeUser === "partner"
-              ? "var(--border)"
-              : "transparent",
-            borderTopWidth: activeUser === "partner" ? 2 : 1,
-            borderTopColor: activeUser === "partner"
-              ? "var(--partner)"
-              : "transparent",
-            marginBottom: activeUser === "partner" ? -1 : 0,
-            zIndex: activeUser === "partner" ? 2 : 1,
-            position: "relative",
+            right: 0,
+            bottom: "100%",
+            marginBottom: 0,
+            background:
+              activeUser === "partner" ? "var(--card)" : "var(--muted)",
+            border: "1px solid var(--border)",
+            borderBottom:
+              activeUser === "partner"
+                ? "1px solid var(--card)"
+                : "1px solid var(--border)",
+            borderTop: `2px solid ${
+              activeUser === "partner" ? "var(--partner)" : "var(--border)"
+            }`,
+            zIndex: activeUser === "partner" ? 3 : 1,
             opacity: !partner ? 0.35 : 1,
           }}
         >
-          {partner ? (
+          {partner && (
             <PixelAvatar
               preset={partner.avatar_preset as AvatarPreset}
               size={16}
               animated={false}
             />
-          ) : (
-            <div
-              className="w-4 h-4 rounded-full"
-              style={{ background: "var(--muted-foreground)", opacity: 0.3 }}
-            />
           )}
           <span
             className="text-xs font-medium whitespace-nowrap"
             style={{
-              color: activeUser === "partner"
-                ? "var(--partner)"
-                : "var(--muted-foreground)",
+              color:
+                activeUser === "partner"
+                  ? "var(--partner)"
+                  : "var(--muted-foreground)",
             }}
           >
             {partner?.name || "Partner"}
           </span>
         </button>
-      </div>
-      {/* Hairline border under tabs connecting to task card */}
-      <div
-        className="mx-3"
-        style={{
-          height: 1,
-          background: "var(--border)",
-          position: "relative",
-          zIndex: 1,
-        }}
-      />
-      <div className="flex flex-col flex-1 px-3 pb-3">
-        {activeUser === "me" ? (
-          <TaskColumn
-            title={profile.name || "You"}
-            accent="mine"
-            person={profile}
-            tasks={myTasks}
-            canEdit
-            loaded={loaded}
-            activeCategory={activeTab}
-            onLocalRemove={(id) => setTasks((prev) => prev.filter((x) => x.id !== id))}
-          />
-        ) : (
-          <TaskColumn
-            title={partner?.name || "Them"}
-            accent="partner"
-            person={partner}
-            tasks={partnerTasks}
-            canEdit={false}
-            loaded={loaded}
-            activeCategory={activeTab}
-            onLocalRemove={(id) => setTasks((prev) => prev.filter((x) => x.id !== id))}
-          />
-        )}
+        {/* Task card — full width, sits below both tabs */}
+        <div
+          className="flex-1 flex flex-col rounded-2xl overflow-hidden"
+          style={{
+            background: "var(--card)",
+            border: "1px solid var(--border)",
+            borderTop: `2px solid ${
+              activeUser === "me" ? "var(--mine)" : "var(--partner)"
+            }`,
+            zIndex: 2,
+            position: "relative",
+          }}
+        >
+          {activeUser === "me" ? (
+            <TaskColumn
+              title={profile.name || "You"}
+              accent="mine"
+              person={profile}
+              tasks={myTasks}
+              canEdit
+              loaded={loaded}
+              activeCategory={activeTab}
+              hideHeader
+              onLocalRemove={(id) =>
+                setTasks((prev) => prev.filter((x) => x.id !== id))
+              }
+            />
+          ) : (
+            <TaskColumn
+              title={partner?.name || "Them"}
+              accent="partner"
+              person={partner}
+              tasks={partnerTasks}
+              canEdit={false}
+              loaded={loaded}
+              activeCategory={activeTab}
+              hideHeader
+              onLocalRemove={(id) =>
+                setTasks((prev) => prev.filter((x) => x.id !== id))
+              }
+            />
+          )}
+        </div>
       </div>
 
 
