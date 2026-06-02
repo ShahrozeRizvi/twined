@@ -165,7 +165,7 @@ function MomentsPage() {
         {moments.length === 0 && (
           <div className="flex flex-col items-center justify-center text-center py-16 gap-4">
             <PixelAvatar preset={profile.avatar_preset as AvatarPreset} size={72} />
-            <p className="text-sm text-muted-foreground">Share a moment from your day</p>
+            <p className="text-sm text-muted-foreground">Nothing shared yet today</p>
           </div>
         )}
 
