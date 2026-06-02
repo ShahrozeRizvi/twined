@@ -805,7 +805,7 @@ function TaskList({
   }
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <SortableContext items={localTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
         <ul className="flex-1 px-2 pb-2 space-y-1 overflow-y-auto min-h-[200px]">
           {emptyState}
