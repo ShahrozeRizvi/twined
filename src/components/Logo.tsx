@@ -1,10 +1,9 @@
 interface LogoProps {
   size?: "sm" | "md" | "lg" | "xl";
   className?: string;
-  style?: React.CSSProperties;
 }
 
-export function Logo({ size = "lg", className = "", style }: LogoProps) {
+export function Logo({ size = "lg", className = "" }: LogoProps) {
   const sizes = {
     sm: "text-2xl",
     md: "text-4xl",
@@ -20,7 +19,6 @@ export function Logo({ size = "lg", className = "", style }: LogoProps) {
         color: "var(--mine)",
         lineHeight: 1.1,
         letterSpacing: "0.02em",
-        ...style,
       }}
       aria-label="Twined"
     >

@@ -75,7 +75,6 @@ function TodayPage() {
   const [loaded, setLoaded] = useState(false);
   const [lists, setLists] = useState<ListRow[]>([]);
   const [activeTab, setActiveTab] = useState<string>(DEFAULT_TAB);
-  const [activeUser, setActiveUser] = useState<"me" | "partner">("me");
   const [menuTarget, setMenuTarget] = useState<MenuTarget | null>(null);
   const [renamingListId, setRenamingListId] = useState<string | null>(null);
   const [confirmList, setConfirmList] = useState<ListRow | null>(null);
@@ -318,131 +317,28 @@ function TodayPage() {
         spaceId={profile.space_id!}
         userId={profile.id}
       />
-      <div className="relative mx-3 mt-1 flex-1 flex flex-col mb-3">
-        {/* Me tab — bottom-left of card top edge */}
-        <button
-          onClick={() => setActiveUser("me")}
-          className="absolute flex items-center gap-1.5 px-3 py-1.5 rounded-t-xl"
-          style={{
-            left: 0,
-            bottom: "100%",
-            marginBottom: 0,
-            background: activeUser === "me" ? "var(--card)" : "var(--muted)",
-            border: "1px solid var(--border)",
-            borderBottom:
-              activeUser === "me"
-                ? "1px solid var(--card)"
-                : "1px solid var(--border)",
-            borderTop: `2px solid ${
-              activeUser === "me" ? "var(--mine)" : "var(--border)"
-            }`,
-            zIndex: activeUser === "me" ? 3 : 1,
-          }}
-        >
-          <PixelAvatar
-            preset={profile.avatar_preset as AvatarPreset}
-            size={16}
-            animated={false}
-          />
-          <span
-            className="text-xs font-medium whitespace-nowrap"
-            style={{
-              color:
-                activeUser === "me"
-                  ? "var(--mine)"
-                  : "var(--muted-foreground)",
-            }}
-          >
-            {profile.name || "Me"}
-          </span>
-        </button>
-        {/* Partner tab — bottom-right of card top edge */}
-        <button
-          onClick={() => setActiveUser("partner")}
-          disabled={!partner}
-          className="absolute flex items-center gap-1.5 px-3 py-1.5 rounded-t-xl"
-          style={{
-            right: 0,
-            bottom: "100%",
-            marginBottom: 0,
-            background:
-              activeUser === "partner" ? "var(--card)" : "var(--muted)",
-            border: "1px solid var(--border)",
-            borderBottom:
-              activeUser === "partner"
-                ? "1px solid var(--card)"
-                : "1px solid var(--border)",
-            borderTop: `2px solid ${
-              activeUser === "partner" ? "var(--partner)" : "var(--border)"
-            }`,
-            zIndex: activeUser === "partner" ? 3 : 1,
-            opacity: !partner ? 0.35 : 1,
-          }}
-        >
-          {partner && (
-            <PixelAvatar
-              preset={partner.avatar_preset as AvatarPreset}
-              size={16}
-              animated={false}
-            />
-          )}
-          <span
-            className="text-xs font-medium whitespace-nowrap"
-            style={{
-              color:
-                activeUser === "partner"
-                  ? "var(--partner)"
-                  : "var(--muted-foreground)",
-            }}
-          >
-            {partner?.name || "Partner"}
-          </span>
-        </button>
-        {/* Task card — full width, sits below both tabs */}
-        <div
-          className="flex-1 flex flex-col rounded-2xl overflow-hidden"
-          style={{
-            background: "var(--card)",
-            border: "1px solid var(--border)",
-            borderTop: `2px solid ${
-              activeUser === "me" ? "var(--mine)" : "var(--partner)"
-            }`,
-            zIndex: 2,
-            position: "relative",
-          }}
-        >
-          {activeUser === "me" ? (
-            <TaskColumn
-              title={profile.name || "You"}
-              accent="mine"
-              person={profile}
-              tasks={myTasks}
-              canEdit
-              loaded={loaded}
-              activeCategory={activeTab}
-              hideHeader
-              onLocalRemove={(id) =>
-                setTasks((prev) => prev.filter((x) => x.id !== id))
-              }
-            />
-          ) : (
-            <TaskColumn
-              title={partner?.name || "Them"}
-              accent="partner"
-              person={partner}
-              tasks={partnerTasks}
-              canEdit={false}
-              loaded={loaded}
-              activeCategory={activeTab}
-              hideHeader
-              onLocalRemove={(id) =>
-                setTasks((prev) => prev.filter((x) => x.id !== id))
-              }
-            />
-          )}
-        </div>
+      <div className="grid grid-cols-2 gap-2 p-3 pt-2 flex-1">
+        <TaskColumn
+          title={profile.name || "You"}
+          accent="mine"
+          person={profile}
+          tasks={myTasks}
+          canEdit
+          loaded={loaded}
+          activeCategory={activeTab}
+          onLocalRemove={(id) => setTasks((prev) => prev.filter((x) => x.id !== id))}
+        />
+        <TaskColumn
+          title={partner?.name || "Them"}
+          accent="partner"
+          person={partner}
+          tasks={partnerTasks}
+          canEdit={false}
+          loaded={loaded}
+          activeCategory={activeTab}
+          onLocalRemove={(id) => setTasks((prev) => prev.filter((x) => x.id !== id))}
+        />
       </div>
-
 
       {menuTarget && (
         <>
@@ -718,7 +614,6 @@ function TaskColumn({
   loaded,
   activeCategory,
   onLocalRemove,
-  hideHeader,
 }: {
   title: string;
   accent: "mine" | "partner";
@@ -728,7 +623,6 @@ function TaskColumn({
   loaded: boolean;
   activeCategory: string;
   onLocalRemove: (id: string) => void;
-  hideHeader?: boolean;
 }) {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -773,12 +667,10 @@ function TaskColumn({
       className="rounded-2xl bg-card border border-border flex flex-col overflow-hidden"
       style={{ borderTopColor: accentVar, borderTopWidth: 2 }}
     >
-      {!hideHeader && (
-        <div className="px-3 pt-3 pb-2 flex items-center gap-2">
-          {person && <PixelAvatar preset={person.avatar_preset as AvatarPreset} size={20} animated={false} />}
-          <span className="text-xs font-medium tracking-wide truncate">{title}</span>
-        </div>
-      )}
+      <div className="px-3 pt-3 pb-2 flex items-center gap-2">
+        {person && <PixelAvatar preset={person.avatar_preset as AvatarPreset} size={20} animated={false} />}
+        <span className="text-xs font-medium tracking-wide truncate">{title}</span>
+      </div>
 
       <TaskList
         tasks={tasks}

@@ -93,7 +93,7 @@ export function TimezoneHeader({ me, partner }: TimezoneHeaderProps) {
           align="start"
           count={myCount}
         />
-        <Logo size="sm" style={{ color: "var(--mine)" }} />
+        <Logo size="sm" />
         <PersonCell
           name={partner?.name || "Your person"}
           tz={partner?.timezone || me.timezone}
