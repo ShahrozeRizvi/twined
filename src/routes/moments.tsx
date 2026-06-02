@@ -80,6 +80,18 @@ function MomentsPage() {
   const [composerOpen, setComposerOpen] = useState(false);
   
 
+  const todayStart = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+
+  const todayEnd = useMemo(() => {
+    const d = new Date();
+    d.setHours(23, 59, 59, 999);
+    return d;
+  }, []);
+
   useEffect(() => {
     if (!profile?.space_id) return;
     let cancelled = false;
@@ -88,6 +100,8 @@ function MomentsPage() {
         .from("moments")
         .select("*")
         .eq("space_id", profile.space_id!)
+        .gte("created_at", todayStart.toISOString())
+        .lte("created_at", todayEnd.toISOString())
         .order("created_at", { ascending: false })
         .limit(100);
       if (!cancelled) setMoments((data as Moment[]) || []);
@@ -95,7 +109,7 @@ function MomentsPage() {
     return () => {
       cancelled = true;
     };
-  }, [profile?.space_id]);
+  }, [profile?.space_id, todayStart, todayEnd]);
 
   // realtime moments
   useEffect(() => {
