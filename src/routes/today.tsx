@@ -236,6 +236,29 @@ function TodayPage() {
     setActiveTab(DEFAULT_TAB);
   };
 
+  const saveRename = async (list: ListRow, newName: string) => {
+    const trimmed = newName.trim();
+    if (!trimmed || trimmed === list.name) {
+      setRenamingListId(null);
+      return;
+    }
+    const oldName = list.name;
+    setLists((prev) =>
+      prev.map((l) => (l.id === list.id ? { ...l, name: trimmed } : l)),
+    );
+    setTasks((prev) =>
+      prev.map((t) => (t.category === oldName ? { ...t, category: trimmed } : t)),
+    );
+    if (activeTab === oldName) setActiveTab(trimmed);
+    setRenamingListId(null);
+    await sb.from("lists").update({ name: trimmed }).eq("id", list.id);
+    await sb
+      .from("tasks")
+      .update({ category: trimmed })
+      .eq("space_id", profile.space_id!)
+      .eq("category", oldName);
+  };
+
   return (
     <div className="flex flex-col min-h-full">
       <TabBar
@@ -248,6 +271,7 @@ function TodayPage() {
         }}
         renamingListId={renamingListId}
         onRenameDone={() => setRenamingListId(null)}
+        onRename={saveRename}
         onOpenMenu={(list, rect) =>
           setMenuTarget({ list, x: rect.left, y: rect.bottom + 8 })
         }
@@ -353,6 +377,7 @@ function TabBar({
   onListAdded,
   renamingListId,
   onRenameDone,
+  onRename,
   onOpenMenu,
   spaceId,
   userId,
@@ -363,6 +388,7 @@ function TabBar({
   onListAdded: (l: ListRow) => void;
   renamingListId: string | null;
   onRenameDone: () => void;
+  onRename: (list: ListRow, newName: string) => void | Promise<void>;
   onOpenMenu: (list: ListRow, rect: DOMRect) => void;
   spaceId: string;
   userId: string;
@@ -402,13 +428,9 @@ function TabBar({
           active={l.name === activeTab}
           renaming={renamingListId === l.id}
           onSelect={() => onSelect(l.name)}
-          onRenamed={(newName) => {
-            onRenameDone();
-            onSelect(newName);
-          }}
+          onRename={(newName) => onRename(l, newName)}
           onRenameCancel={onRenameDone}
           onOpenMenu={(rect) => onOpenMenu(l, rect)}
-          spaceId={spaceId}
         />
       ))}
       {adding ? (
@@ -446,19 +468,17 @@ function TabPill({
   active,
   renaming,
   onSelect,
-  onRenamed,
+  onRename,
   onRenameCancel,
   onOpenMenu,
-  spaceId,
 }: {
   list: ListRow;
   active: boolean;
   renaming: boolean;
   onSelect: () => void;
-  onRenamed: (newName: string) => void;
+  onRename: (newName: string) => void | Promise<void>;
   onRenameCancel: () => void;
   onOpenMenu: (rect: DOMRect) => void;
-  spaceId: string;
 }) {
   const [editName, setEditName] = useState(list.name);
   const editRef = useRef<HTMLInputElement>(null);
@@ -469,7 +489,6 @@ function TabPill({
   useEffect(() => {
     if (renaming) {
       setEditName(list.name);
-      // focus after render
       setTimeout(() => editRef.current?.focus(), 0);
     }
   }, [renaming, list.name]);
@@ -487,20 +506,8 @@ function TabPill({
     if (pressTimer.current) clearTimeout(pressTimer.current);
   };
 
-  const commitRename = async () => {
-    const name = editName.trim();
-    if (!name || name === list.name) {
-      setEditName(list.name);
-      onRenameCancel();
-      return;
-    }
-    await sb.from("lists").update({ name }).eq("id", list.id);
-    await sb
-      .from("tasks")
-      .update({ category: name })
-      .eq("space_id", spaceId)
-      .eq("category", list.name);
-    onRenamed(name);
+  const commitRename = () => {
+    onRename(editName);
   };
 
   if (renaming) {
