@@ -301,54 +301,6 @@ function TodayPage() {
 
   return (
     <div className="flex flex-col min-h-full">
-      <div className="flex items-end px-3 pt-3 gap-2">
-        <button
-          onClick={() => setActiveUser("me")}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-t-2xl rounded-b-none transition-all flex-1 justify-center"
-          style={{
-            background: activeUser === "me" ? "var(--card)" : "var(--muted)",
-            borderTop: activeUser === "me" ? "2px solid var(--mine)" : "2px solid transparent",
-            borderLeft: activeUser === "me" ? "1px solid var(--border)" : "1px solid transparent",
-            borderRight: activeUser === "me" ? "1px solid var(--border)" : "1px solid transparent",
-            opacity: activeUser === "me" ? 1 : 0.6,
-            marginBottom: activeUser === "me" ? -1 : 0,
-          }}
-        >
-          <PixelAvatar preset={profile.avatar_preset as AvatarPreset} size={20} animated={false} />
-          <span
-            className="text-sm font-medium truncate max-w-[80px]"
-            style={{ color: activeUser === "me" ? "var(--mine)" : "var(--muted-foreground)" }}
-          >
-            {profile.name || "Me"}
-          </span>
-        </button>
-        <button
-          onClick={() => setActiveUser("partner")}
-          disabled={!partner}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-t-2xl rounded-b-none transition-all flex-1 justify-center"
-          style={{
-            background: activeUser === "partner" ? "var(--card)" : "var(--muted)",
-            borderTop: activeUser === "partner" ? "2px solid var(--partner)" : "2px solid transparent",
-            borderLeft: activeUser === "partner" ? "1px solid var(--border)" : "1px solid transparent",
-            borderRight: activeUser === "partner" ? "1px solid var(--border)" : "1px solid transparent",
-            opacity: !partner ? 0.3 : activeUser === "partner" ? 1 : 0.6,
-            marginBottom: activeUser === "partner" ? -1 : 0,
-          }}
-        >
-          {partner ? (
-            <PixelAvatar preset={partner.avatar_preset as AvatarPreset} size={20} animated={false} />
-          ) : (
-            <div className="w-5 h-5 rounded-full bg-muted-foreground/20" />
-          )}
-          <span
-            className="text-sm font-medium truncate max-w-[80px]"
-            style={{ color: activeUser === "partner" ? "var(--partner)" : "var(--muted-foreground)" }}
-          >
-            {partner?.name || "Partner"}
-          </span>
-        </button>
-      </div>
-      <div className="mx-3 mb-3" style={{ height: 1, background: "var(--border)" }} />
       <TabBar
         lists={lists}
         activeTab={activeTab}
@@ -365,6 +317,99 @@ function TodayPage() {
         }
         spaceId={profile.space_id!}
         userId={profile.id}
+      />
+      <div className="flex items-end px-3 gap-1 mt-1">
+        {/* Me tab — left, always me */}
+        <button
+          onClick={() => setActiveUser("me")}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-t-xl rounded-b-none transition-none border-t border-l border-r border-b-0"
+          style={{
+            background: activeUser === "me"
+              ? "var(--card)"
+              : "var(--muted)",
+            borderColor: activeUser === "me"
+              ? "var(--border)"
+              : "transparent",
+            borderTopWidth: activeUser === "me" ? 2 : 1,
+            borderTopColor: activeUser === "me"
+              ? "var(--mine)"
+              : "transparent",
+            marginBottom: activeUser === "me" ? -1 : 0,
+            zIndex: activeUser === "me" ? 2 : 1,
+            position: "relative",
+          }}
+        >
+          <PixelAvatar
+            preset={profile.avatar_preset as AvatarPreset}
+            size={16}
+            animated={false}
+          />
+          <span
+            className="text-xs font-medium whitespace-nowrap"
+            style={{
+              color: activeUser === "me"
+                ? "var(--mine)"
+                : "var(--muted-foreground)",
+            }}
+          >
+            {profile.name || "Me"}
+          </span>
+        </button>
+        {/* Partner tab — right, always partner */}
+        <button
+          onClick={() => setActiveUser("partner")}
+          disabled={!partner}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-t-xl rounded-b-none transition-none border-t border-l border-r border-b-0"
+          style={{
+            background: activeUser === "partner"
+              ? "var(--card)"
+              : "var(--muted)",
+            borderColor: activeUser === "partner"
+              ? "var(--border)"
+              : "transparent",
+            borderTopWidth: activeUser === "partner" ? 2 : 1,
+            borderTopColor: activeUser === "partner"
+              ? "var(--partner)"
+              : "transparent",
+            marginBottom: activeUser === "partner" ? -1 : 0,
+            zIndex: activeUser === "partner" ? 2 : 1,
+            position: "relative",
+            opacity: !partner ? 0.35 : 1,
+          }}
+        >
+          {partner ? (
+            <PixelAvatar
+              preset={partner.avatar_preset as AvatarPreset}
+              size={16}
+              animated={false}
+            />
+          ) : (
+            <div
+              className="w-4 h-4 rounded-full"
+              style={{ background: "var(--muted-foreground)", opacity: 0.3 }}
+            />
+          )}
+          <span
+            className="text-xs font-medium whitespace-nowrap"
+            style={{
+              color: activeUser === "partner"
+                ? "var(--partner)"
+                : "var(--muted-foreground)",
+            }}
+          >
+            {partner?.name || "Partner"}
+          </span>
+        </button>
+      </div>
+      {/* Hairline border under tabs connecting to task card */}
+      <div
+        className="mx-3"
+        style={{
+          height: 1,
+          background: "var(--border)",
+          position: "relative",
+          zIndex: 1,
+        }}
       />
       <div className="flex flex-col flex-1 px-3 pb-3">
         {activeUser === "me" ? (
