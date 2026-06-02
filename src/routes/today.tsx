@@ -773,7 +773,15 @@ function TaskList({
         .select("*")
         .eq("space_id", spaceId)
         .order("position", { ascending: true });
-      if (data) setLocalTasks(data as Task[]);
+      if (data) {
+        // Only update tasks for this column's user
+        // Keep partner tasks untouched in state
+        setLocalTasks(
+          (data as Task[])
+            .filter((t) => t.user_id === person?.id)
+            .sort((a, b) => a.position - b.position)
+        );
+      }
     });
   };
 
