@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTwined, type Profile } from "@/lib/use-twined";
 import { PixelAvatar, type AvatarPreset } from "@/components/PixelAvatar";
 import { AppShell } from "@/components/AppShell";
-import { Plus, Check, GripVertical, Trash2, Pencil } from "lucide-react";
+import { Plus, Check, Trash2, Pencil } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
