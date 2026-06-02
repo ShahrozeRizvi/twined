@@ -771,12 +771,31 @@ function StaticTaskItem({
   onToggle: (t: Task) => void;
   onRemove: (t: Task) => void;
 }) {
+  const [editing, setEditing] = useState(false);
+  const [editText, setEditText] = useState("");
+  const editInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editing && editInputRef.current) {
+      const input = editInputRef.current;
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+    }
+  }, [editing]);
+
+  const saveEdit = async () => {
+    if (editText.trim() && editText.trim() !== t.text) {
+      await supabase.from("tasks").update({ text: editText.trim() }).eq("id", t.id);
+    }
+    setEditing(false);
+  };
+
   return (
     <li className="group flex items-start gap-2 px-1.5 py-1.5 rounded-lg">
       <button
         onClick={() => onToggle(t)}
         disabled={!canEdit}
-        className="mt-0.5 w-4 h-4 rounded-md border flex items-center justify-center flex-shrink-0"
+        className="mt-0.5 w-5 h-5 rounded-md border flex items-center justify-center flex-shrink-0 touch-manipulation"
         style={{
           borderColor: t.completed ? accentVar : "var(--border)",
           background: t.completed ? accentVar : "transparent",
@@ -784,17 +803,40 @@ function StaticTaskItem({
       >
         {t.completed && <Check size={11} className="text-background" strokeWidth={3} />}
       </button>
-      <span
-        className={`text-sm leading-tight flex-1 break-words ${
-          t.completed ? "line-through opacity-40" : ""
-        }`}
-      >
-        {t.text}
-      </span>
-      {canEdit && (
+      {editing ? (
+        <input
+          ref={editInputRef}
+          value={editText}
+          onChange={(e) => setEditText(e.target.value)}
+          onBlur={saveEdit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") saveEdit();
+            if (e.key === "Escape") {
+              setEditing(false);
+              setEditText(t.text);
+            }
+          }}
+          maxLength={280}
+          className="flex-1 bg-transparent text-sm px-1 py-0.5 focus:outline-none border-b border-foreground"
+        />
+      ) : (
+        <span
+          onClick={() => {
+            if (!canEdit) return;
+            setEditing(true);
+            setEditText(t.text);
+          }}
+          className={`text-sm leading-tight flex-1 break-words select-none touch-manipulation ${
+            canEdit ? "cursor-text" : "cursor-default"
+          } ${t.completed ? "line-through opacity-40" : ""}`}
+        >
+          {t.text}
+        </span>
+      )}
+      {canEdit && !editing && (
         <button
           onClick={() => onRemove(t)}
-          className="text-muted-foreground opacity-0 group-hover:opacity-100 active:opacity-100 text-xs"
+          className="text-muted-foreground opacity-0 group-hover:opacity-100 active:opacity-100 text-xs touch-manipulation"
           aria-label="Delete"
         >
           ✕
@@ -821,6 +863,25 @@ function SortableTaskItem({
   const [swipeX, setSwipeX] = useState(0);
   const [swiping, setSwiping] = useState(false);
   const startXRef = useRef<number | null>(null);
+
+  const [editing, setEditing] = useState(false);
+  const [editText, setEditText] = useState("");
+  const editInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editing && editInputRef.current) {
+      const input = editInputRef.current;
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+    }
+  }, [editing]);
+
+  const saveEdit = async () => {
+    if (editText.trim() && editText.trim() !== t.text) {
+      await supabase.from("tasks").update({ text: editText.trim() }).eq("id", t.id);
+    }
+    setEditing(false);
+  };
 
   const onTouchStart = (e: React.TouchEvent) => {
     startXRef.current = e.touches[0].clientX;
@@ -866,7 +927,7 @@ function SortableTaskItem({
         </div>
       )}
       <div
-        className="group flex items-start gap-1 px-1.5 py-1.5 bg-card relative"
+        className="group flex items-start gap-2 px-1.5 py-1.5 bg-card relative"
         style={{
           transform: `translateX(${swipeX}px)`,
           transition: swiping ? "none" : "transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1)",
@@ -885,7 +946,7 @@ function SortableTaskItem({
         </button>
         <button
           onClick={() => onToggle(t)}
-          className="mt-0.5 w-4 h-4 rounded-md border flex items-center justify-center flex-shrink-0"
+          className="mt-0.5 w-5 h-5 rounded-md border flex items-center justify-center flex-shrink-0 touch-manipulation"
           style={{
             borderColor: t.completed ? accentVar : "var(--border)",
             background: t.completed ? accentVar : "transparent",
@@ -893,20 +954,44 @@ function SortableTaskItem({
         >
           {t.completed && <Check size={11} className="text-background" strokeWidth={3} />}
         </button>
-        <span
-          className={`text-sm leading-tight flex-1 break-words ${
-            t.completed ? "line-through opacity-40" : ""
-          }`}
-        >
-          {t.text}
-        </span>
-        <button
-          onClick={() => onRemove(t)}
-          className="text-muted-foreground opacity-0 group-hover:opacity-100 active:opacity-100 text-xs"
-          aria-label="Delete"
-        >
-          ✕
-        </button>
+        {editing ? (
+          <input
+            ref={editInputRef}
+            value={editText}
+            onChange={(e) => setEditText(e.target.value)}
+            onBlur={saveEdit}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") saveEdit();
+              if (e.key === "Escape") {
+                setEditing(false);
+                setEditText(t.text);
+              }
+            }}
+            maxLength={280}
+            className="flex-1 bg-transparent text-sm px-1 py-0.5 focus:outline-none border-b border-foreground"
+          />
+        ) : (
+          <span
+            onClick={() => {
+              setEditing(true);
+              setEditText(t.text);
+            }}
+            className={`text-sm leading-tight flex-1 break-words select-none cursor-text touch-manipulation ${
+              t.completed ? "line-through opacity-40" : ""
+            }`}
+          >
+            {t.text}
+          </span>
+        )}
+        {!editing && (
+          <button
+            onClick={() => onRemove(t)}
+            className="text-muted-foreground opacity-0 group-hover:opacity-100 active:opacity-100 text-xs touch-manipulation"
+            aria-label="Delete"
+          >
+            ✕
+          </button>
+        )}
       </div>
     </li>
   );
