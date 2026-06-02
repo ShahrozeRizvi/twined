@@ -248,6 +248,11 @@ function TodayPage() {
           activeCategory={activeTab}
           onLocalRemove={(id) => setTasks((prev) => prev.filter((x) => x.id !== id))}
         />
+      </div>
+    </div>
+  );
+}
+
 
 function TabBar({
   lists,
