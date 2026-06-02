@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTwined, type Profile } from "@/lib/use-twined";
-import { formatLocalTime } from "@/lib/twined";
+import { formatLocalTime, localDateString } from "@/lib/twined";
 import { PixelAvatar, type AvatarPreset } from "@/components/PixelAvatar";
 import { AppShell } from "@/components/AppShell";
 import { Plus, ImagePlus, Camera, Send, X } from "lucide-react";
@@ -80,6 +80,18 @@ function MomentsPage() {
   const [composerOpen, setComposerOpen] = useState(false);
   
 
+  const todayStart = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+
+  const todayEnd = useMemo(() => {
+    const d = new Date();
+    d.setHours(23, 59, 59, 999);
+    return d;
+  }, []);
+
   useEffect(() => {
     if (!profile?.space_id) return;
     let cancelled = false;
@@ -88,6 +100,8 @@ function MomentsPage() {
         .from("moments")
         .select("*")
         .eq("space_id", profile.space_id!)
+        .gte("created_at", todayStart.toISOString())
+        .lte("created_at", todayEnd.toISOString())
         .order("created_at", { ascending: false })
         .limit(100);
       if (!cancelled) setMoments((data as Moment[]) || []);
@@ -95,7 +109,7 @@ function MomentsPage() {
     return () => {
       cancelled = true;
     };
-  }, [profile?.space_id]);
+  }, [profile?.space_id, todayStart, todayEnd]);
 
   // realtime moments
   useEffect(() => {
@@ -110,12 +124,15 @@ function MomentsPage() {
           table: "moments",
           filter: `space_id=eq.${profile.space_id}`,
         },
-        (payload) =>
+        (payload) => {
+          const m = payload.new as Moment;
+          const mDate = new Date(m.created_at);
+          if (mDate < todayStart || mDate > todayEnd) return;
           setMoments((prev) => {
-            const m = payload.new as Moment;
             if (prev.some((x) => x.id === m.id)) return prev;
             return [m, ...prev];
-          })
+          });
+        }
       )
       .on(
         "postgres_changes",
@@ -132,7 +149,7 @@ function MomentsPage() {
     return () => {
       supabase.removeChannel(ch);
     };
-  }, [profile?.space_id]);
+  }, [profile?.space_id, todayStart, todayEnd]);
 
   // (Partner ping notifications are handled globally by PingListener in AppShell)
 
@@ -148,7 +165,7 @@ function MomentsPage() {
         {moments.length === 0 && (
           <div className="flex flex-col items-center justify-center text-center py-16 gap-4">
             <PixelAvatar preset={profile.avatar_preset as AvatarPreset} size={72} />
-            <p className="text-sm text-muted-foreground">Share a moment from your day</p>
+            <p className="text-sm text-muted-foreground">Nothing shared yet today</p>
           </div>
         )}
 
