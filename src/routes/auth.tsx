@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
+import { Eye, EyeOff, Check } from "lucide-react";
 
 const search = z.object({
   mode: z.enum(["create", "join"]).default("create"),
@@ -27,6 +28,10 @@ function AuthPage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [resetSuccess, setResetSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [confirm, setConfirm] = useState("");
+  const [confirmError, setConfirmError] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.location.hash.includes("type=recovery")) {
@@ -71,6 +76,11 @@ function AuthPage() {
         if (error) throw error;
         setResetSent(true);
       } else if (tab === "signup") {
+        if (password !== confirm) {
+          setError("Passwords don't match");
+          setBusy(false);
+          return;
+        }
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -95,7 +105,18 @@ function AuthPage() {
     setForgotMode(false);
     setResetSent(false);
     setError(null);
+    setConfirm("");
+    setConfirmError(null);
+    setShowPassword(false);
+    setShowConfirm(false);
   };
+
+  const PASSWORD_RULES = [
+    { id: "length", label: "At least 8 characters", test: (p: string) => p.length >= 8 },
+    { id: "uppercase", label: "One uppercase letter", test: (p: string) => /[A-Z]/.test(p) },
+    { id: "lowercase", label: "One lowercase letter", test: (p: string) => /[a-z]/.test(p) },
+    { id: "number", label: "One number", test: (p: string) => /[0-9]/.test(p) },
+  ];
 
   if (resetMode) {
     return (
@@ -199,17 +220,81 @@ function AuthPage() {
               className="bg-card border border-border rounded-xl px-4 py-3.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
             />
             {!forgotMode && (
-              <input
-                type="password"
-                required
-                minLength={8}
-                autoComplete={tab === "signup" ? "new-password" : "current-password"}
-                placeholder="Password (min 8 chars)"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="bg-card border border-border rounded-xl px-4 py-3.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  minLength={8}
+                  autoComplete={tab === "signup" ? "new-password" : "current-password"}
+                  placeholder="Password (min 8 chars)"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="bg-card border border-border rounded-xl px-4 py-3.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary w-full pr-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((p) => !p)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             )}
+            {tab === "signup" && password.length > 0 && (
+              <div className="flex flex-col gap-1.5 px-1">
+                {PASSWORD_RULES.map((rule) => {
+                  const met = rule.test(password);
+                  return (
+                    <div key={rule.id} className="flex items-center gap-2 transition-all duration-200">
+                      <div
+                        className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200"
+                        style={{ background: met ? "var(--mine)" : "var(--border)" }}
+                      >
+                        {met && <Check size={10} strokeWidth={3} className="text-white" />}
+                      </div>
+                      <span
+                        className="text-xs transition-colors duration-200"
+                        style={{ color: met ? "var(--mine)" : "var(--muted-foreground)" }}
+                      >
+                        {rule.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            {tab === "signup" && !forgotMode && (
+              <div className="relative">
+                <input
+                  type={showConfirm ? "text" : "password"}
+                  required
+                  placeholder="Confirm password"
+                  value={confirm}
+                  onChange={(e) => {
+                    setConfirm(e.target.value);
+                    if (e.target.value && e.target.value !== password) {
+                      setConfirmError("Passwords don't match");
+                    } else {
+                      setConfirmError(null);
+                    }
+                  }}
+                  className="bg-card border border-border rounded-xl px-4 py-3.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary w-full pr-12"
+                  style={{ borderColor: confirmError ? "var(--destructive)" : undefined }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm((p) => !p)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
+                  aria-label={showConfirm ? "Hide password" : "Show password"}
+                >
+                  {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            )}
+            {confirmError && <p className="text-xs text-destructive -mt-1">{confirmError}</p>}
             {!forgotMode && tab === "login" && (
               <button
                 type="button"
@@ -225,7 +310,11 @@ function AuthPage() {
             {error && <p className="text-xs text-destructive">{error}</p>}
             <button
               type="submit"
-              disabled={busy}
+              disabled={
+                busy ||
+                (tab === "signup" &&
+                  (!PASSWORD_RULES.every((r) => r.test(password)) || password !== confirm))
+              }
               className="rounded-2xl px-6 py-4 font-medium mt-2 disabled:opacity-50"
               style={{ background: "var(--primary)", color: "var(--primary-foreground)" }}
             >
