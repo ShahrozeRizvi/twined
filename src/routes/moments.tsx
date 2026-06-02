@@ -151,6 +151,27 @@ function MomentsPage() {
     };
   }, [profile?.space_id, todayStart, todayEnd]);
 
+  useEffect(() => {
+    const handler = () => {
+      if (!profile?.space_id) return;
+      supabase
+        .from("moments")
+        .select("*")
+        .eq("space_id", profile.space_id)
+        .gte("created_at", todayStart.toISOString())
+        .lte("created_at", todayEnd.toISOString())
+        .order("created_at", { ascending: false })
+        .limit(100)
+        .then(({ data }) => {
+          if (data) setMoments(data as Moment[]);
+        });
+    };
+    window.addEventListener("twined:reconnect", handler);
+    return () => {
+      window.removeEventListener("twined:reconnect", handler);
+    };
+  }, [profile?.space_id, todayStart, todayEnd]);
+
   // (Partner ping notifications are handled globally by PingListener in AppShell)
 
   if (!profile) return null;
