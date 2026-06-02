@@ -444,53 +444,44 @@ function TabBar({
 function TabPill({
   list,
   active,
-  canDelete,
+  renaming,
   onSelect,
   onRenamed,
-  onDeleted,
+  onRenameCancel,
+  onOpenMenu,
   spaceId,
 }: {
   list: ListRow;
   active: boolean;
-  canDelete: boolean;
+  renaming: boolean;
   onSelect: () => void;
   onRenamed: (newName: string) => void;
-  onDeleted: () => void;
+  onRenameCancel: () => void;
+  onOpenMenu: (rect: DOMRect) => void;
   spaceId: string;
 }) {
-  const [mode, setMode] = useState<"view" | "menu" | "rename">("view");
-  const [confirmOpen, setConfirmOpen] = useState(false);
   const [editName, setEditName] = useState(list.name);
   const editRef = useRef<HTMLInputElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
   const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressed = useRef(false);
 
   useEffect(() => {
-    if (mode === "rename") editRef.current?.focus();
-  }, [mode]);
+    if (renaming) {
+      setEditName(list.name);
+      // focus after render
+      setTimeout(() => editRef.current?.focus(), 0);
+    }
+  }, [renaming, list.name]);
 
-  // close menu on outside click
-  useEffect(() => {
-    if (mode !== "menu") return;
-    const onDown = () => setMode("view");
-    // defer so opening click doesn't immediately close it
-    const t = setTimeout(() => {
-      document.addEventListener("mousedown", onDown);
-      document.addEventListener("touchstart", onDown);
-    }, 0);
-    return () => {
-      clearTimeout(t);
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("touchstart", onDown);
-    };
-  }, [mode]);
+  const triggerMenu = () => {
+    longPressed.current = true;
+    if (btnRef.current) onOpenMenu(btnRef.current.getBoundingClientRect());
+  };
 
   const startPress = () => {
     longPressed.current = false;
-    pressTimer.current = setTimeout(() => {
-      longPressed.current = true;
-      setMode("menu");
-    }, 500);
+    pressTimer.current = setTimeout(triggerMenu, 500);
   };
   const endPress = () => {
     if (pressTimer.current) clearTimeout(pressTimer.current);
@@ -499,8 +490,8 @@ function TabPill({
   const commitRename = async () => {
     const name = editName.trim();
     if (!name || name === list.name) {
-      setMode("view");
       setEditName(list.name);
+      onRenameCancel();
       return;
     }
     await sb.from("lists").update({ name }).eq("id", list.id);
@@ -509,23 +500,10 @@ function TabPill({
       .update({ category: name })
       .eq("space_id", spaceId)
       .eq("category", list.name);
-    setMode("view");
     onRenamed(name);
   };
 
-  const doDelete = async () => {
-    await sb
-      .from("tasks")
-      .update({ category: DEFAULT_TAB })
-      .eq("space_id", spaceId)
-      .eq("category", list.name);
-    await sb.from("lists").delete().eq("id", list.id);
-    setConfirmOpen(false);
-    setMode("view");
-    onDeleted();
-  };
-
-  if (mode === "rename") {
+  if (renaming) {
     return (
       <input
         ref={editRef}
@@ -535,8 +513,8 @@ function TabPill({
         onKeyDown={(e) => {
           if (e.key === "Enter") commitRename();
           if (e.key === "Escape") {
-            setMode("view");
             setEditName(list.name);
+            onRenameCancel();
           }
         }}
         maxLength={40}
@@ -546,97 +524,37 @@ function TabPill({
   }
 
   return (
-    <div className="relative flex-shrink-0">
-      <button
-        onClick={() => {
-          if (longPressed.current) {
-            longPressed.current = false;
-            return;
-          }
-          onSelect();
-        }}
-        onMouseDown={startPress}
-        onMouseUp={endPress}
-        onMouseLeave={endPress}
-        onTouchStart={startPress}
-        onTouchEnd={endPress}
-        onContextMenu={(e) => {
-          e.preventDefault();
-          setMode("menu");
-        }}
-        className="px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors"
-        style={
-          active
-            ? { background: "var(--mine)", color: "#ffffff", border: "1px solid transparent" }
-            : {
-                background: "transparent",
-                color: "var(--muted-foreground)",
-                border: "1px solid var(--border)",
-              }
+    <button
+      ref={btnRef}
+      onClick={() => {
+        if (longPressed.current) {
+          longPressed.current = false;
+          return;
         }
-      >
-        {list.name}
-      </button>
-
-      {mode === "menu" && (
-        <div
-          onMouseDown={(e) => e.stopPropagation()}
-          onTouchStart={(e) => e.stopPropagation()}
-          className="absolute left-0 top-full mt-1 z-50 min-w-[140px] bg-card border border-border rounded-xl shadow-lg overflow-hidden"
-        >
-          <button
-            onClick={() => {
-              setMode("rename");
-              setEditName(list.name);
-            }}
-            className="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-muted text-left"
-          >
-            <Pencil size={13} />
-            <span>Rename</span>
-          </button>
-          {canDelete ? (
-            <button
-              onClick={() => {
-                setMode("view");
-                setConfirmOpen(true);
-              }}
-              className="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-muted text-left text-destructive"
-            >
-              <Trash2 size={13} />
-              <span>Delete</span>
-            </button>
-          ) : (
-            <div
-              title="You need at least one list"
-              className="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground opacity-50 cursor-not-allowed"
-            >
-              <Trash2 size={13} />
-              <span>Delete</span>
-            </div>
-          )}
-        </div>
-      )}
-
-      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete {list.name}?</AlertDialogTitle>
-            <AlertDialogDescription>
-              All tasks in this list will be moved to General. This cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={doDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+        onSelect();
+      }}
+      onMouseDown={startPress}
+      onMouseUp={endPress}
+      onMouseLeave={endPress}
+      onTouchStart={startPress}
+      onTouchEnd={endPress}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        triggerMenu();
+      }}
+      className="px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors flex-shrink-0"
+      style={
+        active
+          ? { background: "var(--mine)", color: "#ffffff", border: "1px solid transparent" }
+          : {
+              background: "transparent",
+              color: "var(--muted-foreground)",
+              border: "1px solid var(--border)",
+            }
+      }
+    >
+      {list.name}
+    </button>
   );
 }
 
