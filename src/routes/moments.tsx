@@ -124,12 +124,15 @@ function MomentsPage() {
           table: "moments",
           filter: `space_id=eq.${profile.space_id}`,
         },
-        (payload) =>
+        (payload) => {
+          const m = payload.new as Moment;
+          const mDate = new Date(m.created_at);
+          if (mDate < todayStart || mDate > todayEnd) return;
           setMoments((prev) => {
-            const m = payload.new as Moment;
             if (prev.some((x) => x.id === m.id)) return prev;
             return [m, ...prev];
-          })
+          });
+        }
       )
       .on(
         "postgres_changes",
