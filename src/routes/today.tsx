@@ -1013,11 +1013,13 @@ function SortableTaskItem({
         <button
           {...attributes}
           {...listeners}
-          className="mt-0.5 text-muted-foreground opacity-0 group-hover:opacity-60 active:opacity-100 cursor-grab active:cursor-grabbing touch-none flex-shrink-0"
+          className="absolute opacity-0 group-hover:opacity-60 group-active:opacity-100 cursor-grab active:cursor-grabbing touch-none transition-opacity text-muted-foreground"
+          style={{ left: -2, top: "50%", transform: "translateY(-50%)" }}
           aria-label="Drag to reorder"
         >
           <GripVertical size={14} />
         </button>
+
         <button
           onClick={() => onToggle(t)}
           className="mt-0.5 w-5 h-5 rounded-md border flex items-center justify-center flex-shrink-0 touch-manipulation"
