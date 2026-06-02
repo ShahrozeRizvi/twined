@@ -539,6 +539,7 @@ function TaskColumn({
   canEdit: boolean;
   loaded: boolean;
   activeCategory: string;
+  onLocalRemove: (id: string) => void;
 }) {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
