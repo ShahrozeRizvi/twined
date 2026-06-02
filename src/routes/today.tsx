@@ -740,21 +740,41 @@ function TaskList({
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
 
-  const handleDragEnd = async (event: DragEndEvent) => {
+  const handleDragStart = () => {
+    isDraggingRef.current = true;
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    isDraggingRef.current = false;
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     const oldIndex = localTasks.findIndex((t) => t.id === active.id);
     const newIndex = localTasks.findIndex((t) => t.id === over.id);
     if (oldIndex === -1 || newIndex === -1) return;
+
     const reordered = arrayMove(localTasks, oldIndex, newIndex);
     setLocalTasks(reordered);
-    await Promise.all(
-      reordered.map((t, i) =>
-        t.position === i
-          ? Promise.resolve()
-          : supabase.from("tasks").update({ position: i }).eq("id", t.id)
+
+    // Only update tasks whose index actually changed
+    const updates = reordered
+      .map((t, index) => ({ id: t.id, position: index }))
+      .filter((item, index) => localTasks[index]?.id !== item.id);
+
+    const spaceId = reordered[0]?.space_id;
+
+    Promise.all(
+      updates.map(({ id, position }) =>
+        supabase.from("tasks").update({ position }).eq("id", id)
       )
-    );
+    ).then(async () => {
+      if (!spaceId) return;
+      const { data } = await supabase
+        .from("tasks")
+        .select("*")
+        .eq("space_id", spaceId)
+        .order("position", { ascending: true });
+      if (data) setLocalTasks(data as Task[]);
+    });
   };
 
   const emptyState = loaded && localTasks.length === 0 && (
