@@ -75,6 +75,7 @@ function TodayPage() {
   const [loaded, setLoaded] = useState(false);
   const [lists, setLists] = useState<ListRow[]>([]);
   const [activeTab, setActiveTab] = useState<string>(DEFAULT_TAB);
+  const [activeUser, setActiveUser] = useState<"me" | "partner">("me");
   const [menuTarget, setMenuTarget] = useState<MenuTarget | null>(null);
   const [renamingListId, setRenamingListId] = useState<string | null>(null);
   const [confirmList, setConfirmList] = useState<ListRow | null>(null);
