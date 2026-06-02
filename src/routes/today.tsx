@@ -718,6 +718,7 @@ function TaskColumn({
   loaded,
   activeCategory,
   onLocalRemove,
+  hideHeader,
 }: {
   title: string;
   accent: "mine" | "partner";
@@ -727,6 +728,7 @@ function TaskColumn({
   loaded: boolean;
   activeCategory: string;
   onLocalRemove: (id: string) => void;
+  hideHeader?: boolean;
 }) {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -771,10 +773,12 @@ function TaskColumn({
       className="rounded-2xl bg-card border border-border flex flex-col overflow-hidden"
       style={{ borderTopColor: accentVar, borderTopWidth: 2 }}
     >
-      <div className="px-3 pt-3 pb-2 flex items-center gap-2">
-        {person && <PixelAvatar preset={person.avatar_preset as AvatarPreset} size={20} animated={false} />}
-        <span className="text-xs font-medium tracking-wide truncate">{title}</span>
-      </div>
+      {!hideHeader && (
+        <div className="px-3 pt-3 pb-2 flex items-center gap-2">
+          {person && <PixelAvatar preset={person.avatar_preset as AvatarPreset} size={20} animated={false} />}
+          <span className="text-xs font-medium tracking-wide truncate">{title}</span>
+        </div>
+      )}
 
       <TaskList
         tasks={tasks}
