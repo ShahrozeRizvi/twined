@@ -531,6 +531,7 @@ function TaskColumn({
   canEdit,
   loaded,
   activeCategory,
+  onLocalRemove,
 }: {
   title: string;
   accent: "mine" | "partner";
