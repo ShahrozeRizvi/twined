@@ -75,6 +75,7 @@ function TodayPage() {
   const [loaded, setLoaded] = useState(false);
   const [lists, setLists] = useState<ListRow[]>([]);
   const [activeTab, setActiveTab] = useState<string>(DEFAULT_TAB);
+  const [activeUser, setActiveUser] = useState<"me" | "partner">("me");
   const [menuTarget, setMenuTarget] = useState<MenuTarget | null>(null);
   const [renamingListId, setRenamingListId] = useState<string | null>(null);
   const [confirmList, setConfirmList] = useState<ListRow | null>(null);
@@ -300,6 +301,54 @@ function TodayPage() {
 
   return (
     <div className="flex flex-col min-h-full">
+      <div className="flex items-end px-3 pt-3 gap-2">
+        <button
+          onClick={() => setActiveUser("me")}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-t-2xl rounded-b-none transition-all flex-1 justify-center"
+          style={{
+            background: activeUser === "me" ? "var(--card)" : "var(--muted)",
+            borderTop: activeUser === "me" ? "2px solid var(--mine)" : "2px solid transparent",
+            borderLeft: activeUser === "me" ? "1px solid var(--border)" : "1px solid transparent",
+            borderRight: activeUser === "me" ? "1px solid var(--border)" : "1px solid transparent",
+            opacity: activeUser === "me" ? 1 : 0.6,
+            marginBottom: activeUser === "me" ? -1 : 0,
+          }}
+        >
+          <PixelAvatar preset={profile.avatar_preset as AvatarPreset} size={20} animated={false} />
+          <span
+            className="text-sm font-medium truncate max-w-[80px]"
+            style={{ color: activeUser === "me" ? "var(--mine)" : "var(--muted-foreground)" }}
+          >
+            {profile.name || "Me"}
+          </span>
+        </button>
+        <button
+          onClick={() => setActiveUser("partner")}
+          disabled={!partner}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-t-2xl rounded-b-none transition-all flex-1 justify-center"
+          style={{
+            background: activeUser === "partner" ? "var(--card)" : "var(--muted)",
+            borderTop: activeUser === "partner" ? "2px solid var(--partner)" : "2px solid transparent",
+            borderLeft: activeUser === "partner" ? "1px solid var(--border)" : "1px solid transparent",
+            borderRight: activeUser === "partner" ? "1px solid var(--border)" : "1px solid transparent",
+            opacity: !partner ? 0.3 : activeUser === "partner" ? 1 : 0.6,
+            marginBottom: activeUser === "partner" ? -1 : 0,
+          }}
+        >
+          {partner ? (
+            <PixelAvatar preset={partner.avatar_preset as AvatarPreset} size={20} animated={false} />
+          ) : (
+            <div className="w-5 h-5 rounded-full bg-muted-foreground/20" />
+          )}
+          <span
+            className="text-sm font-medium truncate max-w-[80px]"
+            style={{ color: activeUser === "partner" ? "var(--partner)" : "var(--muted-foreground)" }}
+          >
+            {partner?.name || "Partner"}
+          </span>
+        </button>
+      </div>
+      <div className="mx-3 mb-3" style={{ height: 1, background: "var(--border)" }} />
       <TabBar
         lists={lists}
         activeTab={activeTab}
@@ -317,28 +366,32 @@ function TodayPage() {
         spaceId={profile.space_id!}
         userId={profile.id}
       />
-      <div className="grid grid-cols-2 gap-2 p-3 pt-2 flex-1">
-        <TaskColumn
-          title={profile.name || "You"}
-          accent="mine"
-          person={profile}
-          tasks={myTasks}
-          canEdit
-          loaded={loaded}
-          activeCategory={activeTab}
-          onLocalRemove={(id) => setTasks((prev) => prev.filter((x) => x.id !== id))}
-        />
-        <TaskColumn
-          title={partner?.name || "Them"}
-          accent="partner"
-          person={partner}
-          tasks={partnerTasks}
-          canEdit={false}
-          loaded={loaded}
-          activeCategory={activeTab}
-          onLocalRemove={(id) => setTasks((prev) => prev.filter((x) => x.id !== id))}
-        />
+      <div className="flex flex-col flex-1 px-3 pb-3">
+        {activeUser === "me" ? (
+          <TaskColumn
+            title={profile.name || "You"}
+            accent="mine"
+            person={profile}
+            tasks={myTasks}
+            canEdit
+            loaded={loaded}
+            activeCategory={activeTab}
+            onLocalRemove={(id) => setTasks((prev) => prev.filter((x) => x.id !== id))}
+          />
+        ) : (
+          <TaskColumn
+            title={partner?.name || "Them"}
+            accent="partner"
+            person={partner}
+            tasks={partnerTasks}
+            canEdit={false}
+            loaded={loaded}
+            activeCategory={activeTab}
+            onLocalRemove={(id) => setTasks((prev) => prev.filter((x) => x.id !== id))}
+          />
+        )}
       </div>
+
 
       {menuTarget && (
         <>
