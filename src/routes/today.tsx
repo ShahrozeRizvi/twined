@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTwined, type Profile } from "@/lib/use-twined";
 import { PixelAvatar, type AvatarPreset } from "@/components/PixelAvatar";
 import { AppShell } from "@/components/AppShell";
-import { Plus, Check, GripVertical, Trash2, Pencil } from "lucide-react";
+import { Plus, Check, Trash2, Pencil } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -988,6 +988,8 @@ function SortableTaskItem({
   return (
     <li
       ref={setNodeRef}
+      {...attributes}
+      {...listeners}
       style={style}
       className="relative rounded-lg overflow-hidden"
     >
@@ -1011,17 +1013,10 @@ function SortableTaskItem({
         onTouchEnd={onTouchEnd}
       >
         <button
-          {...attributes}
-          {...listeners}
-          className="absolute opacity-0 group-hover:opacity-60 group-active:opacity-100 cursor-grab active:cursor-grabbing touch-none transition-opacity text-muted-foreground"
-          style={{ left: -2, top: "50%", transform: "translateY(-50%)" }}
-          aria-label="Drag to reorder"
-        >
-          <GripVertical size={14} />
-        </button>
-
-        <button
-          onClick={() => onToggle(t)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggle(t);
+          }}
           className="mt-0.5 w-5 h-5 rounded-md border flex items-center justify-center flex-shrink-0 touch-manipulation"
           style={{
             borderColor: t.completed ? accentVar : "var(--border)",
