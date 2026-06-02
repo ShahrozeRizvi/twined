@@ -208,6 +208,9 @@ function TodayPage() {
               return [...prev, t].sort((a, b) => a.position - b.position);
             }
             if (payload.eventType === "UPDATE") {
+              // Skip updates while a drag is settling to prevent
+              // out-of-order position events from reverting state.
+              if (isDraggingRef.current) return prev;
               const t = payload.new as Task;
               return prev.map((x) => (x.id === t.id ? t : x));
             }
