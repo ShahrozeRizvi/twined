@@ -574,8 +574,10 @@ function TaskColumn({
 
   const remove = async (t: Task) => {
     if (!canEdit) return;
+    onLocalRemove(t.id);
     await supabase.from("tasks").delete().eq("id", t.id);
   };
+
 
   return (
     <div
