@@ -145,6 +145,27 @@ function MapPage() {
     };
   }, [profile?.space_id]);
 
+  useEffect(() => {
+    const handler = () => {
+      if (!profile?.space_id) return;
+      const since = new Date();
+      since.setHours(0, 0, 0, 0);
+      supabase
+        .from("trail_points")
+        .select("*")
+        .eq("space_id", profile.space_id)
+        .gte("created_at", since.toISOString())
+        .order("created_at", { ascending: true })
+        .then(({ data }) => {
+          if (data) setPoints(data as TrailPoint[]);
+        });
+    };
+    window.addEventListener("twined:reconnect", handler);
+    return () => {
+      window.removeEventListener("twined:reconnect", handler);
+    };
+  }, [profile?.space_id]);
+
   // check if I already have an active session
   useEffect(() => {
     if (!profile?.space_id || !profile?.id) return;

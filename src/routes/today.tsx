@@ -165,6 +165,24 @@ function TodayPage() {
     };
   }, [profile?.space_id]);
 
+  useEffect(() => {
+    const handler = () => {
+      if (!profile?.space_id) return;
+      supabase
+        .from("tasks")
+        .select("*")
+        .eq("space_id", profile.space_id)
+        .order("position", { ascending: true })
+        .then(({ data }) => {
+          if (data) setTasks(data as Task[]);
+        });
+    };
+    window.addEventListener("twined:reconnect", handler);
+    return () => {
+      window.removeEventListener("twined:reconnect", handler);
+    };
+  }, [profile?.space_id]);
+
   // realtime: tasks
   useEffect(() => {
     if (!profile?.space_id) return;
