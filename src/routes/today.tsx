@@ -351,6 +351,9 @@ function TabBar({
   activeTab,
   onSelect,
   onListAdded,
+  renamingListId,
+  onRenameDone,
+  onOpenMenu,
   spaceId,
   userId,
 }: {
@@ -358,6 +361,9 @@ function TabBar({
   activeTab: string;
   onSelect: (name: string) => void;
   onListAdded: (l: ListRow) => void;
+  renamingListId: string | null;
+  onRenameDone: () => void;
+  onOpenMenu: (list: ListRow, rect: DOMRect) => void;
   spaceId: string;
   userId: string;
 }) {
@@ -394,13 +400,14 @@ function TabBar({
           key={l.id}
           list={l}
           active={l.name === activeTab}
-          canDelete={lists.length > 1}
+          renaming={renamingListId === l.id}
           onSelect={() => onSelect(l.name)}
-          onRenamed={(newName) => onSelect(newName)}
-          onDeleted={() => {
-            const next = lists.find((x) => x.id !== l.id);
-            onSelect(next?.name ?? DEFAULT_TAB);
+          onRenamed={(newName) => {
+            onRenameDone();
+            onSelect(newName);
           }}
+          onRenameCancel={onRenameDone}
+          onOpenMenu={(rect) => onOpenMenu(l, rect)}
           spaceId={spaceId}
         />
       ))}
