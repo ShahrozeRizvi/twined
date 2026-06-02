@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TodayRouteImport } from './routes/today'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PairedRouteImport } from './routes/paired'
 import { Route as OnboardRouteImport } from './routes/onboard'
 import { Route as MomentsRouteImport } from './routes/moments'
@@ -28,6 +29,11 @@ const TodayRoute = TodayRouteImport.update({
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PairedRoute = PairedRouteImport.update({
@@ -80,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/moments': typeof MomentsRoute
   '/onboard': typeof OnboardRoute
   '/paired': typeof PairedRoute
+  '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
   '/today': typeof TodayRoute
 }
@@ -92,6 +99,7 @@ export interface FileRoutesByTo {
   '/moments': typeof MomentsRoute
   '/onboard': typeof OnboardRoute
   '/paired': typeof PairedRoute
+  '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
   '/today': typeof TodayRoute
 }
@@ -105,6 +113,7 @@ export interface FileRoutesById {
   '/moments': typeof MomentsRoute
   '/onboard': typeof OnboardRoute
   '/paired': typeof PairedRoute
+  '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
   '/today': typeof TodayRoute
 }
@@ -119,6 +128,7 @@ export interface FileRouteTypes {
     | '/moments'
     | '/onboard'
     | '/paired'
+    | '/privacy'
     | '/settings'
     | '/today'
   fileRoutesByTo: FileRoutesByTo
@@ -131,6 +141,7 @@ export interface FileRouteTypes {
     | '/moments'
     | '/onboard'
     | '/paired'
+    | '/privacy'
     | '/settings'
     | '/today'
   id:
@@ -143,6 +154,7 @@ export interface FileRouteTypes {
     | '/moments'
     | '/onboard'
     | '/paired'
+    | '/privacy'
     | '/settings'
     | '/today'
   fileRoutesById: FileRoutesById
@@ -156,6 +168,7 @@ export interface RootRouteChildren {
   MomentsRoute: typeof MomentsRoute
   OnboardRoute: typeof OnboardRoute
   PairedRoute: typeof PairedRoute
+  PrivacyRoute: typeof PrivacyRoute
   SettingsRoute: typeof SettingsRoute
   TodayRoute: typeof TodayRoute
 }
@@ -174,6 +187,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/paired': {
@@ -244,9 +264,20 @@ const rootRouteChildren: RootRouteChildren = {
   MomentsRoute: MomentsRoute,
   OnboardRoute: OnboardRoute,
   PairedRoute: PairedRoute,
+  PrivacyRoute: PrivacyRoute,
   SettingsRoute: SettingsRoute,
   TodayRoute: TodayRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
