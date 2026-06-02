@@ -236,6 +236,29 @@ function TodayPage() {
     setActiveTab(DEFAULT_TAB);
   };
 
+  const saveRename = async (list: ListRow, newName: string) => {
+    const trimmed = newName.trim();
+    if (!trimmed || trimmed === list.name) {
+      setRenamingListId(null);
+      return;
+    }
+    const oldName = list.name;
+    setLists((prev) =>
+      prev.map((l) => (l.id === list.id ? { ...l, name: trimmed } : l)),
+    );
+    setTasks((prev) =>
+      prev.map((t) => (t.category === oldName ? { ...t, category: trimmed } : t)),
+    );
+    if (activeTab === oldName) setActiveTab(trimmed);
+    setRenamingListId(null);
+    await sb.from("lists").update({ name: trimmed }).eq("id", list.id);
+    await sb
+      .from("tasks")
+      .update({ category: trimmed })
+      .eq("space_id", profile.space_id!)
+      .eq("category", oldName);
+  };
+
   return (
     <div className="flex flex-col min-h-full">
       <TabBar
