@@ -468,19 +468,17 @@ function TabPill({
   active,
   renaming,
   onSelect,
-  onRenamed,
+  onRename,
   onRenameCancel,
   onOpenMenu,
-  spaceId,
 }: {
   list: ListRow;
   active: boolean;
   renaming: boolean;
   onSelect: () => void;
-  onRenamed: (newName: string) => void;
+  onRename: (newName: string) => void | Promise<void>;
   onRenameCancel: () => void;
   onOpenMenu: (rect: DOMRect) => void;
-  spaceId: string;
 }) {
   const [editName, setEditName] = useState(list.name);
   const editRef = useRef<HTMLInputElement>(null);
@@ -491,7 +489,6 @@ function TabPill({
   useEffect(() => {
     if (renaming) {
       setEditName(list.name);
-      // focus after render
       setTimeout(() => editRef.current?.focus(), 0);
     }
   }, [renaming, list.name]);
@@ -509,20 +506,8 @@ function TabPill({
     if (pressTimer.current) clearTimeout(pressTimer.current);
   };
 
-  const commitRename = async () => {
-    const name = editName.trim();
-    if (!name || name === list.name) {
-      setEditName(list.name);
-      onRenameCancel();
-      return;
-    }
-    await sb.from("lists").update({ name }).eq("id", list.id);
-    await sb
-      .from("tasks")
-      .update({ category: name })
-      .eq("space_id", spaceId)
-      .eq("category", list.name);
-    onRenamed(name);
+  const commitRename = () => {
+    onRename(editName);
   };
 
   if (renaming) {
