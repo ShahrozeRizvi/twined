@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
+import { Eye, EyeOff, Check } from "lucide-react";
 
 const search = z.object({
   mode: z.enum(["create", "join"]).default("create"),
@@ -27,6 +28,10 @@ function AuthPage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [resetSuccess, setResetSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [confirm, setConfirm] = useState("");
+  const [confirmError, setConfirmError] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.location.hash.includes("type=recovery")) {
@@ -71,6 +76,11 @@ function AuthPage() {
         if (error) throw error;
         setResetSent(true);
       } else if (tab === "signup") {
+        if (password !== confirm) {
+          setError("Passwords don't match");
+          setBusy(false);
+          return;
+        }
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -95,7 +105,18 @@ function AuthPage() {
     setForgotMode(false);
     setResetSent(false);
     setError(null);
+    setConfirm("");
+    setConfirmError(null);
+    setShowPassword(false);
+    setShowConfirm(false);
   };
+
+  const PASSWORD_RULES = [
+    { id: "length", label: "At least 8 characters", test: (p: string) => p.length >= 8 },
+    { id: "uppercase", label: "One uppercase letter", test: (p: string) => /[A-Z]/.test(p) },
+    { id: "lowercase", label: "One lowercase letter", test: (p: string) => /[a-z]/.test(p) },
+    { id: "number", label: "One number", test: (p: string) => /[0-9]/.test(p) },
+  ];
 
   if (resetMode) {
     return (
