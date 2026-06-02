@@ -271,6 +271,7 @@ function TodayPage() {
         }}
         renamingListId={renamingListId}
         onRenameDone={() => setRenamingListId(null)}
+        onRename={saveRename}
         onOpenMenu={(list, rect) =>
           setMenuTarget({ list, x: rect.left, y: rect.bottom + 8 })
         }
