@@ -377,6 +377,7 @@ function TabBar({
   onListAdded,
   renamingListId,
   onRenameDone,
+  onRename,
   onOpenMenu,
   spaceId,
   userId,
@@ -387,6 +388,7 @@ function TabBar({
   onListAdded: (l: ListRow) => void;
   renamingListId: string | null;
   onRenameDone: () => void;
+  onRename: (list: ListRow, newName: string) => void | Promise<void>;
   onOpenMenu: (list: ListRow, rect: DOMRect) => void;
   spaceId: string;
   userId: string;
